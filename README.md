@@ -47,6 +47,10 @@ define('VOID_PASSWORD', 'admin123');   // ← CHANGE: password cashiers need to 
 ### 6. HTTPS
 Once your hosting has an SSL certificate (most free ones do — Cloudflare,
 Let's Encrypt), the session cookie automatically becomes `secure`.
+The system **auto-enforces HTTPS on any real domain** (localhost/XAMPP is exempt):
+non-HTTPS requests are 301-redirected to HTTPS and an HSTS header is sent.
+You still need an SSL certificate on the host (usually free via cPanel AutoSSL/Let's Encrypt).
+
 Force HTTPS in cPanel or `.htaccess`:
 ```apache
 RewriteEngine On

@@ -22,6 +22,42 @@ if (empty($_POST['action'])) {
 }
 $action = $action ?: ($_POST['action'] ?? '');
 
+/* ── login rate limiting: max 5 failed attempts per 60s, per IP or per username ── */
+function login_client_ip(): string
+{
+    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+}
+
+function login_rate_ok(string $ip, string $username, int $max = 5, int $window = 60): array
+{
+    db()->prepare('DELETE FROM login_attempts WHERE attempted_at < (NOW() - INTERVAL 1 HOUR)')->execute();
+    $st = db()->prepare(
+        'SELECT
+           (SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND success = 0 AND attempted_at >= (NOW() - INTERVAL 60 SECOND)) AS ip_fails,
+           (SELECT COUNT(*) FROM login_attempts WHERE username = ? AND success = 0 AND attempted_at >= (NOW() - INTERVAL 60 SECOND)) AS user_fails'
+    );
+    $st->execute([$ip, $username]);
+    $r = $st->fetch();
+
+    if ((int)$r['ip_fails'] >= $max || (int)$r['user_fails'] >= $max) {
+        $oldest = db()->prepare(
+            'SELECT COALESCE(MIN(attempted_at), NOW()) AS oldest FROM login_attempts
+              WHERE (ip = ? OR username = ?) AND success = 0 AND attempted_at >= (NOW() - INTERVAL 60 SECOND)'
+        );
+        $oldest->execute([$ip, $username]);
+        $elapsed = time() - strtotime($oldest->fetch()['oldest']);
+        $wait    = max(1, $window - $elapsed);
+        return ['ok' => false, 'wait' => $wait];
+    }
+    return ['ok' => true, 'wait' => 0];
+}
+
+function login_record_attempt(string $ip, string $username, bool $success): void
+{
+    db()->prepare('INSERT INTO login_attempts (ip, username, success) VALUES (?, ?, ?)')
+        ->execute([$ip, mb_substr($username, 0, 64), $success ? 1 : 0]);
+}
+
 switch ($action) {
 
     
@@ -38,11 +74,20 @@ switch ($action) {
             json_out(['success' => false, 'message' => 'Please enter username and password.']);
         }
 
+        /* IP + username rate limit (works even without session cookies) */
+        $mhIp   = login_client_ip();
+        $mhRate = login_rate_ok($mhIp, $username);
+        if (!$mhRate['ok']) {
+            audit_log(['username' => $username], 'login_throttled', 'user', null, 'Rate limited: ' . $mhIp);
+            json_out(['success' => false, 'message' => 'Too many login attempts. Try again in ' . $mhRate['wait'] . ' seconds.']);
+        }
+
         $st = db()->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
         $st->execute([$username]);
         $user = $st->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
+            login_record_attempt($mhIp, $username, false);
             $_SESSION['login_fails'] = ($_SESSION['login_fails'] ?? 0) + 1;
             if ($_SESSION['login_fails'] >= 5) {
                 $_SESSION['login_lock'] = time() + 30;
@@ -55,6 +100,7 @@ switch ($action) {
             json_out(['success' => false, 'message' => 'Your account is deactivated. Contact the administrator.']);
         }
 
+        login_record_attempt($mhIp, $username, true);
         unset($_SESSION['login_fails'], $_SESSION['login_lock']);
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int)$user['id'];

@@ -55,6 +55,21 @@ function auto_product_image(int $productId, string $name, string $category): voi
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
+/* HTTPS enforcement — production only (localhost/XAMPP dev is exempt).
+   Any non-HTTPS request to a real domain is 301-redirected so credentials
+   always travel encrypted. Needs an SSL certificate on the host. */
+$mhHost    = strtolower(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+$mhIsLocal = in_array($mhHost, ['localhost', '127.0.0.1', '::1'], true) || PHP_SAPI === 'cli';
+$mhHttpsOn = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+          || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+          || (($_SERVER['SERVER_PORT'] ?? '') == 443);
+if ($mhHttpsOn) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+} elseif (!$mhIsLocal && $mhHost !== '') {
+    header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
+    exit;
+}
+
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'posinventory');
 define('DB_USER', 'root');

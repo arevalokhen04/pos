@@ -246,3 +246,15 @@ FROM products p WHERE p.stock_qty > 0;
 
 -- (No demo notifications — the bell starts empty on a clean install.
 --  Low-stock and approval alerts are generated automatically by the system.)
+
+-- Login rate limiting (max 5 failed attempts per 60s per IP or username)
+DROP TABLE IF EXISTS login_attempts;
+CREATE TABLE login_attempts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ip VARCHAR(45) NOT NULL,
+  username VARCHAR(64) NOT NULL DEFAULT '',
+  success TINYINT(1) NOT NULL DEFAULT 0,
+  attempted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX ip_idx (ip),
+  INDEX user_idx (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
