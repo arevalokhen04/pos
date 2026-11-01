@@ -1,13 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Demo data generator
- * Creates ~2 months of random sales (with realistic hardware-store
- * purchasing patterns) so the Reports page has data to show.
- * Safe to run multiple times: clears old generated sales first.
- *
- * ★ PROTECTED: super admin login + ?confirm=yes required — this page
- *   TRUNCATES all sales when run. Never expose it unprotected online.
- */
+
 require __DIR__ . '/db.php';
 
 $me = current_user();
@@ -33,24 +25,21 @@ if (($_GET['confirm'] ?? '') !== 'yes') {
 $pdo = db();
 $days = 60;
 
-/* cashiers + products */
 $cashiers = $pdo->query("SELECT id FROM users WHERE role='cashier' AND status='active'")->fetchAll(PDO::FETCH_COLUMN);
 $products = $pdo->query("SELECT id, selling_price, cost_price, name FROM products WHERE status='active' ORDER BY RAND()")->fetchAll();
 if (!$cashiers || !$products) {
     die('<h3 style="font-family:sans-serif">Need at least one active cashier and one active product. Import posdatabase.sql first.</h3>');
 }
 
-/* wipe previously generated demo sales */
 $pdo->query('SET FOREIGN_KEY_CHECKS=0');
 $pdo->query('TRUNCATE sale_items');
 $pdo->query('TRUNCATE sales');
 $pdo->query('DELETE FROM inventory_movements WHERE type="sale"');
 $pdo->query('SET FOREIGN_KEY_CHECKS=1');
 
-/* weights: some products sell much more than others */
 $weights = [];
 foreach ($products as $i => $p) {
-    $weights[] = pow(1.18, count($products) - $i); // earlier (random) products weigh more
+    $weights[] = pow(1.18, count($products) - $i); 
 }
 $totalW = array_sum($weights);
 
@@ -80,11 +69,11 @@ $insMove = $pdo->prepare(
 $count = 0;
 for ($d = $days - 1; $d >= 0; $d--) {
     $date = new DateTime("-$d days");
-    $dow  = (int)$date->format('N');          // 1=Mon..7=Sun
-    /* weekends + month-ends (13th-month bonus season) are busier */
+    $dow  = (int)$date->format('N');          
+    
     $txn  = random_int($dow >= 6 ? 9 : 4, $dow >= 6 ? 18 : 11);
     if ((int)$date->format('d') >= 27 || (int)$date->format('d') <= 3) $txn += random_int(2, 6);
-    if (random_int(1, 20) === 1) $txn = random_int(1, 3);   // slow day
+    if (random_int(1, 20) === 1) $txn = random_int(1, 3);   
 
     for ($t = 0; $t < $txn; $t++) {
         $cashierId = $cashiers[array_rand($cashiers)];
@@ -126,7 +115,6 @@ for ($d = $days - 1; $d >= 0; $d--) {
     }
 }
 
-/* a couple of pending requests + matching notifications so the workflow is visible */
 $pdo->query("DELETE FROM stock_requests WHERE reason LIKE 'DEMO%'");
 $demoCashier = (int)$cashiers[0];
 foreach ($products as $i => $p) {

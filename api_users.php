@@ -1,8 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - User management API (super admin only)
- * Actions: list | create | update | set_status | reset_password
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_role('super_admin');

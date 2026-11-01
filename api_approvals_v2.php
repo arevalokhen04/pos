@@ -1,17 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Approvals API v2 (stock requests workflow)
- *
- * Flow:
- *   Cashier/admin files a stock request (stock_in / price_change / damage_report)
- *     -> notification to approvers (admin + super_admin)
- *   Admin or super admin decides (approve / reject)
- *     -> on approve: applies the change to inventory + logs movement
- *     -> notification back to the requester
- *
- * GET  : my_requests | queue | history
- * POST : create | decide
- */
+
 require __DIR__ . '/db.php';
 
 $user   = require_login();
@@ -36,7 +24,7 @@ function request_row(string $where, array $params): array
     foreach ($rows as &$r) {
         if (!empty($r['payload'])) {
             $r['payload_data'] = json_decode($r['payload'], true);
-            // new-product requests have no joined product yet — show the requested name
+            
             if (empty($r['product_name']) && is_array($r['payload_data'] ?? null)) {
                 $r['product_name'] = $r['payload_data']['new']['name'] ?? $r['payload_data']['name'] ?? '(new product)';
             }
@@ -48,23 +36,23 @@ function request_row(string $where, array $params): array
 if ($method === 'GET') {
     switch ($action) {
 
-        case 'my_requests': // requests I filed, still pending
+        case 'my_requests': 
             json_out(['success' => true, 'requests' => request_row(
                 'WHERE sr.requested_by = ? AND sr.status = "pending"',
                 [$user['id']]
             )]);
 
-        case 'queue': // pending requests waiting for a decision — SUPER ADMIN ONLY
+        case 'queue': 
             require_role('super_admin');
             json_out(['success' => true, 'requests' => request_row('WHERE sr.status = "pending"', [])]);
 
         case 'history':
             require_role('admin', 'super_admin');
             if ($user['role'] === 'admin') {
-                // admins see only the requests they filed (all statuses)
+                
                 $rows = request_row('WHERE sr.requested_by = ?', [$user['id']]);
             } else {
-                // super admin sees everything
+                
                 $rows = request_row('', []);
             }
             json_out(['success' => true, 'requests' => $rows]);
@@ -76,7 +64,7 @@ if ($method === 'GET') {
 
 switch ($action) {
 
-    /* ---------------- CREATE REQUEST (admins only) ---------------- */
+    
     case 'create':
         require_role('admin');
         $productId = (int)($input['product_id'] ?? 0);
@@ -87,7 +75,7 @@ switch ($action) {
         $reason    = trim($input['reason'] ?? '');
         $payload   = isset($input['payload']) && is_array($input['payload']) ? $input['payload'] : null;
 
-        /* --- product add / edit requests carry the full details as payload --- */
+        
         if ($reqType === 'new_product' || $reqType === 'edit_product') {
             if ($reqType === 'edit_product') {
                 $editPid = (int)($payload['product_id'] ?? 0);
@@ -117,15 +105,15 @@ switch ($action) {
             if (!$st->fetch()) {
                 json_out(['success' => false, 'message' => 'Category does not exist.']);
             }
-            /* numeric fields can never be negative — clamp before storing/applying */
+            
             $data['cost_price']    = max(0, (float)($data['cost_price'] ?? 0));
             $data['selling_price'] = max(0, (float)($data['selling_price'] ?? 0));
             $data['stock_qty']     = max(0, (int)($data['stock_qty'] ?? 0));
             $data['reorder_level'] = max(0, (int)($data['reorder_level'] ?? 10));
             if ($reqType === 'edit_product') {
-                $payload['new'] = $data;   // keep the payload consistent with what will be applied
+                $payload['new'] = $data;   
             } else {
-                $payload = $data;          // new_product: the payload IS the product data
+                $payload = $data;          
             }
             $barcode = trim($data['barcode'] ?? '');
             if ($barcode !== '') {
@@ -165,7 +153,7 @@ switch ($action) {
             json_out(['success' => true, 'message' => 'Request #' . $reqId . ' submitted for approval.', 'id' => $reqId]);
         }
 
-        /* --- stock adjustment requests (signed qty: + add, − deduct) --- */
+        
         if ($reqType === 'adjust_stock') {
             $pid    = (int)($payload['product_id'] ?? 0);
             $adjQty = (int)($payload['qty'] ?? 0);
@@ -206,7 +194,7 @@ switch ($action) {
             json_out(['success' => true, 'message' => 'Request #' . $reqId . ' submitted for approval.', 'id' => $reqId]);
         }
 
-        /* --- stock transfer requests (warehouse <-> display shelves) --- */
+        
         if ($reqType === 'transfer_stock') {
             $pid       = (int)($payload['product_id'] ?? 0);
             $direction = ($payload['direction'] ?? '') === 'to_warehouse' ? 'to_warehouse' : 'to_display';
@@ -252,7 +240,7 @@ switch ($action) {
             json_out(['success' => true, 'message' => 'Request #' . $reqId . ' submitted for approval.', 'id' => $reqId]);
         }
 
-        /* --- stock-in / price change / damage report --- */
+        
         if (!$productId) {
             json_out(['success' => false, 'message' => 'Please choose a product.']);
         }
@@ -287,14 +275,14 @@ switch ($action) {
         $detail = $labels[$reqType] . ' for ' . $p['name'] .
             ($reqType === 'price_change' ? ' -> ' . peso((float)$newPrice) : ' (' . abs($qty) . ' units)');
 
-        // approvals belong to the SUPER ADMIN only — never mirrored to admins
+        
         notify('role:super_admin', 'approval', 'New request needs approval',
             $user['full_name'] . ': ' . $detail, 'super_admin.php');
         audit_log($user, 'request_create', 'stock_request', $reqId, $detail . ' — ' . $reason);
 
         json_out(['success' => true, 'message' => 'Request submitted for approval.', 'id' => $reqId]);
 
-    /* ---------------- DECIDE (approve / reject) — SUPER ADMIN ONLY ---------------- */
+    
     case 'decide':
         require_role('super_admin');
         $id     = (int)($input['id'] ?? 0);
@@ -316,7 +304,7 @@ switch ($action) {
         $pdo->beginTransaction();
         try {
             if ($decision === 'approved') {
-                // apply the requested change
+                
                 if ($req['req_type'] === 'stock_in') {
                     $newQty = (int)$req['stock_qty'] + (int)$req['qty'];
                     $upd = $pdo->prepare('UPDATE products SET stock_qty = ? WHERE id = ?');
@@ -341,7 +329,7 @@ switch ($action) {
                     $mv->execute([$req['product_id'], $user['id'], -(int)$req['qty'],
                                   'Damage approved request #' . $id . ' — ' . $req['reason']]);
                 } elseif ($req['req_type'] === 'adjust_stock') {
-                    // signed shelf correction: + adds display stock, − deducts; never below zero
+                    
                     $adjQty = (int)$req['qty'];
                     $cur    = (int)$req['display_qty'];
                     $newQty = $cur + $adjQty;
@@ -357,7 +345,7 @@ switch ($action) {
                     $mv->execute([$req['product_id'], $user['id'], $adjQty,
                                   'Display stock correction approved request #' . $id . ' — ' . $req['reason']]);
                 } elseif ($req['req_type'] === 'transfer_stock') {
-                    // move units between warehouse and display shelves
+                    
                     $pd = json_decode((string)$req['payload'], true);
                     $tQty = (int)($pd['qty'] ?? 0);
                     $toDisplay = ($pd['direction'] ?? '') === 'to_display';
@@ -385,7 +373,7 @@ switch ($action) {
                     $mv->execute([$req['product_id'], $user['id'], $tQty,
                                   'Transfer ' . ($toDisplay ? 'warehouse to display' : 'display to warehouse') . ' approved request #' . $id]);
                 } elseif ($req['req_type'] === 'new_product') {
-                    // insert the requested product
+                    
                     $pd = json_decode((string)$req['payload'], true);
                     $name  = trim($pd['name'] ?? '');
                     $catId = (int)($pd['category_id'] ?? 0);
@@ -412,7 +400,7 @@ switch ($action) {
                                    (float)($pd['cost_price'] ?? 0), (float)($pd['selling_price'] ?? 0),
                                    $stock, max(0, (int)($pd['reorder_level'] ?? 10))]);
                     $newPid = (int)$pdo->lastInsertId();
-                    /* awtomatikong litrato kung wlang na-upload */
+                    
                     if (empty($pd['image'])) {
                         auto_product_image($newPid, $name, (string)($pd['category_name'] ?? ''));
                     }
@@ -424,15 +412,15 @@ switch ($action) {
                         $mv->execute([$newPid, $user['id'], $stock, 'Initial stock — approved request #' . $id]);
                     }
                 } elseif ($req['req_type'] === 'edit_product') {
-                    // apply the requested field changes — but NEVER stock_qty here:
-                    // sales may have changed it since the request was filed.
+                    
+                    
                     $pd  = json_decode((string)$req['payload'], true);
                     $new = is_array($pd['new'] ?? null) ? $pd['new'] : null;
                     $pid = (int)($pd['product_id'] ?? 0);
                     if (!$new || !$pid) {
                         throw new RuntimeException('Request payload has invalid product data.');
                     }
-                    // keep the current barcode if the requested one is now taken by another product
+                    
                     $barcode = trim($new['barcode'] ?? '');
                     $cur = $pdo->prepare('SELECT barcode FROM products WHERE id = ?');
                     $cur->execute([$pid]);

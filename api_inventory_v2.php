@@ -1,13 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Inventory API v2
- * Actions:
- *   GET  list | categories | low_stock | movements
- *   POST save_product | delete_product | save_category | delete_category | adjust_stock
- *
- * Stock increases normally go through api_approvals_v2.php (request -> approve).
- * Direct adjust_stock is an admin-only correction tool.
- */
+
 require __DIR__ . '/db.php';
 
 $user  = require_login();
@@ -38,7 +30,7 @@ if ($method === 'GET') {
                   WHERE p.status = "active"';
             $params = [];
             if ($search !== '') {
-                /* multi-word search: EVERY word must appear in the name or barcode */
+                
                 $sql .= ' AND (';
                 $parts = [];
                 foreach (preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY) as $w) {
@@ -78,10 +70,7 @@ if ($method === 'GET') {
             json_out(['success' => true, 'products' => $st->fetchAll()]);
 
         case 'movement':
-            /* Fast / slow moving analysis for the store owner.
-               sold30 = units sold in the last N days (7/30/90);
-               classification (PHP-side): fast >= average of movers, slow = sold but below average,
-               dead = zero sales in the period. Super admin / admin only. */
+            
             require_role('admin', 'super_admin');
             $days = in_array((int)($_GET['days'] ?? 30), [7, 30, 90], true) ? (int)($_GET['days'] ?? 30) : 30;
 
@@ -104,7 +93,7 @@ if ($method === 'GET') {
             $st->execute();
             $rows = $st->fetchAll();
 
-            /* average units sold among products that actually sold → fast/slow threshold */
+            
             $movers = array_filter($rows, fn($r) => (int)$r['sold30'] > 0);
             $avg = $movers ? array_sum(array_column($movers, 'sold30')) / count($movers) : 0;
             $fastline = max(1, (int)ceil($avg));
@@ -141,13 +130,12 @@ if ($method === 'GET') {
     }
 }
 
-/* ------------------------- POST actions ------------------------- */
+
 
 switch ($action) {
 
     case 'save_product':
-        /* SUPER ADMIN ONLY — admins add/edit products through the approval
-           workflow (api_approvals_v2.php) so every change is reviewed. */
+        
         require_role('super_admin');
         $id       = (int)($input['id'] ?? 0);
         $barcode  = trim($input['barcode'] ?? '');
@@ -171,9 +159,9 @@ switch ($action) {
         if (!$catRow) {
             json_out(['success' => false, 'message' => 'Category does not exist.']);
         }
-        /* numeric fields were already clamped to >= 0 above */
+        
 
-        /* auto-generate a unique SKU when the barcode field is empty */
+        
         if ($barcode === '') {
             $catStmt = db()->prepare('SELECT name FROM categories WHERE id = ?');
             $catStmt->execute([$catId]);
@@ -185,7 +173,7 @@ switch ($action) {
                 $chk->execute([$barcode]);
             } while ($chk->fetch());
         } else {
-            /* friendly error if the typed barcode is already taken */
+            
             $chk = db()->prepare('SELECT id FROM products WHERE barcode = ? AND id != ?');
             $chk->execute([$barcode, $id]);
             if ($chk->fetch()) {
@@ -203,7 +191,7 @@ switch ($action) {
             json_out(['success' => true, 'message' => 'Product updated.']);
         }
 
-        /* new products land in the WAREHOUSE (stocks) — a transfer moves them to the display shelves */
+        
         $st = db()->prepare(
             'INSERT INTO products (barcode, name, category_id, unit, image, cost_price, selling_price, stock_qty, display_qty, reorder_level)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)'
@@ -211,7 +199,7 @@ switch ($action) {
         $imgPath = $input['image'] ?? null;
         $st->execute([$barcode ?: null, $name, $catId, $unit, $imgPath, $cost, $price, $stock, $reorder]);
         $newId = (int)db()->lastInsertId();
-        /* awtomatikong litrato mula sa Commons kung walang na-upload */
+        
         if (empty($imgPath)) {
             auto_product_image($newId, $name, (string)$catRow['name']);
         }
@@ -234,7 +222,7 @@ switch ($action) {
         if (!$p) {
             json_out(['success' => false, 'message' => 'Product not found.']);
         }
-        // soft delete: keep history of sold items intact
+        
         $st = db()->prepare('UPDATE products SET status = "inactive" WHERE id = ?');
         $st->execute([$id]);
         audit_log($user, 'product_delete', 'product', $id, 'Archived product ' . $p['name']);
@@ -276,8 +264,7 @@ switch ($action) {
         json_out(['success' => true, 'message' => 'Category deleted.']);
 
     case 'adjust_stock':
-        /* SUPER ADMIN ONLY — admins request stock adjustments through the
-           approval workflow (api_approvals_v2.php) so every stock change is reviewed. */
+        
         require_role('super_admin');
         $id    = (int)($input['product_id'] ?? 0);
         $qty   = (int)($input['qty'] ?? 0);
@@ -306,7 +293,7 @@ switch ($action) {
         json_out(['success' => true, 'message' => ucfirst($target === 'display_qty' ? 'display' : 'warehouse') . ' stock adjusted to ' . $newQty . '.']);
 
     case 'transfer_stock':
-        /* SUPER ADMIN ONLY — direktang paglipat ng stock (walang approval kung siya mismo) */
+        
         require_role('super_admin');
         $pid       = (int)($input['product_id'] ?? 0);
         $direction = ($input['direction'] ?? '') === 'to_warehouse' ? 'to_warehouse' : 'to_display';
@@ -340,7 +327,7 @@ switch ($action) {
         json_out(['success' => true, 'message' => 'Transferred ' . $tQty . ' ' . $direction . '.']);
 
     case 'receive_stock':
-        /* SUPER ADMIN ONLY — boxed/warehouse stock received via barcode scanner */
+        
         require_role('super_admin');
         $in    = json_input();
         $items = $in['items'] ?? [];

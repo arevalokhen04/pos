@@ -1,9 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Admin dashboard (Vue 3)
- * super_admin.php includes this file with $IS_SUPER = true
- * which unlocks Users management + full approvals queue.
- */
+
 require __DIR__ . '/db.php';
 
 $IS_SUPER = $IS_SUPER ?? false;
@@ -1622,7 +1618,7 @@ const ME = <?= json_encode($me) ?>;
 
 const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
 
-/* green & white chart theme */
+
 Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
 Chart.defaults.color = '#52636f';
 const GREEN = ['#16a34a', '#15803d', '#22c55e', '#166534', '#4ade80', '#14532d', '#86efac'];
@@ -1632,7 +1628,7 @@ const __app = createApp({
     const me = ME;
     const isSuper = IS_SUPER;
 
-    /* ── i18n: language selector (English / Filipino) ── */
+    
     const lang = ref(localStorage.getItem('mh_lang') || 'en');
     function saveLang() { localStorage.setItem('mh_lang', lang.value); }
     const FIL = {
@@ -1741,7 +1737,7 @@ const __app = createApp({
 
     const initials = computed(() => me.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase());
 
-    /* ---------------- helpers ---------------- */
+    
     const fmtP = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtN = n => Number(n || 0).toLocaleString('en-PH');
     const fmtDT = s => s ? new Date(s.replace(' ', 'T')).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
@@ -1779,7 +1775,7 @@ const __app = createApp({
     }[t] || t);
     const notifIcon = t => ({ low_stock: '⚠️', approval: '📝', approved: '✅', rejected: '❌', new_user: '🆕', info: 'ℹ️' }[t] || '🔔');
 
-    /* readable summary of what an edit_product request would change */
+    
     const FIELD_LABELS = { name: 'Name', barcode: 'Barcode/SKU', category_name: 'Category', unit: 'Unit', cost_price: 'Cost price', selling_price: 'Selling price', reorder_level: 'Reorder level' };
     const NUMERIC_FIELDS = ['cost_price', 'selling_price', 'reorder_level', 'stock_qty'];
     function fieldChanged(k, o, n) {
@@ -2007,7 +2003,7 @@ const __app = createApp({
       inv.form[key] = v;
     }
 
-    /* product image upload — agad na ia-upload at ia-attach sa form */
+    
     async function onImagePick(e) {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -2032,7 +2028,7 @@ const __app = createApp({
       }
     }
 
-    /* auto SKU: MH-<category prefix>-<random>, e.g. MH-BM-48213 */
+    
     function genSku(catName) {
       const words = (catName || 'General').split(/[^A-Za-z]+/).filter(Boolean);
       const prefix = (words.map(w => w[0]).join('').toUpperCase() || 'GEN').slice(0, 3);
@@ -2064,10 +2060,10 @@ const __app = createApp({
       };
       let r;
       if (isSuper) {
-        // super admin: direct save
+        
         r = await api('api_inventory_v2.php?action=save_product', clean);
       } else {
-        // admin: goes to the super admin as an approval request
+        
         const reqType = clean.id ? 'edit_product' : 'new_product';
         const payload = reqType === 'edit_product'
           ? { product_id: clean.id, old: inv.allProducts.find(p => p.id === clean.id) || {}, new: clean }
@@ -2115,12 +2111,12 @@ const __app = createApp({
       inv.saving = true;
       let r;
       if (isSuper) {
-        // direktang pagwawasto — si super admin mismo
+        
         r = await api('api_inventory_v2.php?action=adjust_stock', {
           product_id: inv.adjustProd.id, qty: inv.adjustQty, target: inv.adjustTarget, notes: inv.adjustNote,
         });
       } else {
-        // admin: request na dadaan sa super admin
+        
         r = await api('api_approvals_v2.php?action=create', {
           req_type: 'adjust_stock',
           payload: { product_id: inv.adjustProd.id, qty: inv.adjustQty, current_stock: inv.adjustProd.stock_qty },
@@ -2146,7 +2142,7 @@ const __app = createApp({
       } else toast('error', r.message);
     }
 
-    /* stock transfer request: warehouse <-> display shelves (needs approval) */
+    
     function openTransfer(p) {
       inv.transferProd = p;
       inv.transferDir = 'to_display';
@@ -2162,12 +2158,12 @@ const __app = createApp({
       inv.saving = true;
       let r;
       if (isSuper) {
-        // direktang paglipat — si super admin mismo
+        
         r = await api('api_inventory_v2.php?action=transfer_stock', {
           product_id: inv.transferProd.id, direction: inv.transferDir, qty: inv.transferQty, notes: inv.transferNote,
         });
       } else {
-        // admin: request na dadaan sa super admin
+        
         r = await api('api_approvals_v2.php?action=create', {
           req_type: 'transfer_stock',
           payload: {
@@ -2212,14 +2208,14 @@ const __app = createApp({
       else toast('error', r.message);
     }
 
-    /* fast / slow moving analysis (super admin) */
+    
     const movement = reactive({ loading: false, days: 30, summary: null, stats: [], fastList: [], slowList: [] });
-    const dashMv = ref('all');                // dashboard summary filter: all | fast | slow | dead
-    const movementTab = ref('graph');           // graph | fast | slow
-    const invNavOpen = ref(true);               // Inventory dropdown sa sidebar
-    const mvFilter = ref('all');               // all | fast | slow | dead
+    const dashMv = ref('all');                
+    const movementTab = ref('graph');           
+    const invNavOpen = ref(true);               
+    const mvFilter = ref('all');               
     const mvSearch = ref('');
-    /* filtered rows para sa Inventory Report table */
+    
     const movementTableRows = computed(() => {
       let list = movement.stats;
       if (mvFilter.value !== 'all') list = list.filter(p => p.movement === mvFilter.value);
@@ -2227,10 +2223,10 @@ const __app = createApp({
       if (t) list = list.filter(p => (p.name + ' ' + (p.barcode || '')).toLowerCase().includes(t));
       return list;
     });
-    /* dashboard summary — sitting/no-sales rows follow the pills filter */
+    
     const dashSitRows = computed(() => dashMv.value === 'dead' ? movement.slowList.filter(p => p.movement === 'dead') : movement.slowList);
 
-    /* ── barcode labels + warehouse scanning ── */
+    
     const scanBox = ref('');
     function findProductByBarcode(code) {
       const c = String(code || '').trim().toLowerCase();
@@ -2311,7 +2307,7 @@ const __app = createApp({
       if (t === 'graph') nextTick(drawMovementChart);
     }
 
-    /* Reports dropdown: Sales Report <-> Inventory Report */
+    
     function onReportKind() {
       if (rep.kind === 'inventory') {
         loadMovement();
@@ -2336,7 +2332,7 @@ const __app = createApp({
       movement.loading = false;
     }
 
-    /* ---------------- requests (admin files, super decides) ---------------- */
+    
     const req = reactive({ my: [], history: [], form: {}, saving: false });
     async function loadRequests() {
       const r = await api('api_approvals_v2.php?action=my_requests');
@@ -2356,7 +2352,7 @@ const __app = createApp({
       req.saving = false;
       if (r.success) {
         modals.request = false;
-        // big, unmissable confirmation — then show it in the pending list right away
+        
         await Swal.fire({
           icon: 'success',
           title: 'Request #' + r.id + ' submitted!',
@@ -2370,7 +2366,7 @@ const __app = createApp({
       } else toast('error', r.message);
     }
 
-    /* ---------------- approvals ---------------- */
+    
     const appr = reactive({ queue: [], history: [] });
     const reqDetail = reactive({ open: false, r: null });
     function viewRequest(r) {
@@ -2425,9 +2421,9 @@ const __app = createApp({
       } else toast('error', out.message);
     }
 
-    /* ---------------- reports ★ ---------------- */
+    
     const rep = reactive({
-      kind: 'sales',   // sales | inventory (super admin dropdown)
+      kind: 'sales',   
       period: 'daily', date: todayISO(), month: todayISO().slice(0, 7),
       from: new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10), to: todayISO(),
       data: null,
@@ -2472,7 +2468,7 @@ const __app = createApp({
     }
     function exportCSV() { location.href = 'reports.php?' + reportQS().replace('action=summary', 'action=export'); }
 
-    /* receipt preview mula sa Recent transactions — makikita ang binili */
+    
     const rcptDetail = reactive({ open: false, url: '', receiptNo: '', saleId: 0 });
     function viewReceiptAdmin(s) {
       rcptDetail.saleId = s.id;
@@ -2485,10 +2481,10 @@ const __app = createApp({
     }
     function printReport() { window.print(); }
 
-    /* ---------------- audit ---------------- */
-    /* Backup & Restore (super admin) */
+    
+    
     const backup = reactive({ creating: false, loading: false, busy: false, list: [], history: [], restoreHistory: [], restoreFile: null, restoreConfirm: '', overview: {}, settings: {} });
-    const bk = backup; // alias para sa template
+    const bk = backup; 
     function fmtSize(b) {
       if (b > 1048576) return (b / 1048576).toFixed(2) + ' MB';
       if (b > 1024) return (b / 1024).toFixed(1) + ' KB';
@@ -2497,7 +2493,7 @@ const __app = createApp({
     async function loadBackups() {
       if (!isSuper) return;
       backup.loading = true;
-      await api('api_backup.php?action=auto_check');   // daily automatic backup
+      await api('api_backup.php?action=auto_check');   
       const r = await api('api_backup.php?action=list');
       if (r.success) {
         backup.list = r.backups;
@@ -2681,7 +2677,7 @@ const __app = createApp({
       audit.loading = false;
     }
 
-    /* ---------------- users (super) ---------------- */
+    
     const users = reactive({ list: [], loading: false, form: {}, resetTarget: null, newPass: '' });
     async function loadUsers() {
       if (!isSuper) return;
@@ -2713,16 +2709,16 @@ const __app = createApp({
       else toast('error', r.message);
     }
 
-    /* ---------------- account ---------------- */
+    
     async function logout() {
       await api('auth.php?action=logout', {});
       location.href = 'Login.php';
     }
 
-    /* ---------------- boot ---------------- */
+    
     onMounted(() => {
-      // restore the view the user was on before F5 — but only views their role can use
-      // (prevents a super admin landing on the empty "My Requests" page after an admin used the browser)
+      
+      
       const savedView = sessionStorage.getItem('mh_admin_view');
       const validForRole = isSuper
         ? ['dashboard', 'inventory', 'approvals', 'reports', 'audit', 'users', 'backup']
@@ -2730,7 +2726,7 @@ const __app = createApp({
       if (savedView && validForRole.includes(savedView)) {
         go(savedView);
       } else {
-        // role-mismatched saved view → land on the page their role actually uses
+        
         sessionStorage.setItem('mh_admin_view', isSuper ? 'inventory' : 'dashboard');
         go(isSuper ? 'inventory' : 'dashboard');
       }
@@ -2738,11 +2734,11 @@ const __app = createApp({
       loadUnread();
       loadCounts();
       setInterval(loadUnread, 30000);
-      // keep the Inventory table fresh while it's on screen (cashier sales reflect automatically)
+      
       setInterval(() => { if (view.value === 'inventory' || view.value === 'stocksdisplay') loadInventory(); }, 30000);
-      // inventory report: new sales reflect without F5 (+ read-only product display)
+      
       setInterval(() => { if (view.value === 'reports' && isSuper && rep.kind === 'inventory') loadMovement(); }, 30000);
-      // live request workflow: new requests appear for the super admin, decisions appear for admins — no F5 needed
+      
       setInterval(() => {
         if (view.value === 'approvals') loadApprovals();
         if (view.value === 'requests') loadRequests();

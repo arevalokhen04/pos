@@ -1,8 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Authentication API
- * Actions: login | logout | register | reset_password | me
- */
+
 require __DIR__ . '/db.php';
 
 mh_session_start();
@@ -27,9 +24,9 @@ $action = $action ?: ($_POST['action'] ?? '');
 
 switch ($action) {
 
-    /* ---------------- LOGIN ---------------- */
+    
     case 'login':
-        /* brute-force throttle: 5 failed tries locks login for 30 seconds */
+        
         if (!empty($_SESSION['login_lock']) && time() < $_SESSION['login_lock']) {
             json_out(['success' => false, 'message' => 'Too many failed attempts. Try again in ' . ceil($_SESSION['login_lock'] - time()) . ' seconds.']);
         }
@@ -85,7 +82,7 @@ switch ($action) {
             ],
         ]);
 
-    /* ---------------- LOGOUT ---------------- */
+    
     case 'logout':
         $user = current_user();
         if ($user) {
@@ -95,7 +92,7 @@ switch ($action) {
         session_destroy();
         json_out(['success' => true, 'message' => 'Logged out successfully.']);
 
-    /* ---------------- REGISTER (new cashier/staff account, needs activation) ---------------- */
+    
     case 'register':
         $username = trim($input['username'] ?? '');
         $fullName = trim($input['full_name'] ?? '');
@@ -129,9 +126,9 @@ switch ($action) {
 
         json_out(['success' => true, 'message' => 'Registered! Wait for the super admin to activate your account.']);
 
-    /* ---------------- RESET / CHANGE OWN PASSWORD ---------------- */
+    
     case 'reset_password':
-        /* SI SUPER ADMIN LANG ang maaaring magpalit ng password (self-change ng admin/cashier ay wala na) */
+        
         $user = require_role('super_admin');
         $old = $input['old_password'] ?? '';
         $new = $input['new_password'] ?? '';

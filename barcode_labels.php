@@ -1,10 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Barcode label sheet (printable)
- * barcode_labels.php?product_id=X&qty=N
- * Renders N scannable CODE128 labels (50 x 30 mm) for boxed/warehouse stock.
- * Print with any thermal/A4 label sheet — scanners work straight off the page.
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_role('admin', 'super_admin');
@@ -137,8 +132,7 @@ $unit  = htmlspecialchars($p['unit'], ENT_QUOTES, 'UTF-8');
     this.value = n;
     var sheet = document.getElementById('sheet');
     var labels = sheet.querySelectorAll('.label');
-    /* rebuild the label list to the requested count */
-    for (var i = labels.length; i < n; i++) sheet.appendChild(labels[0].cloneNode(true));
+        for (var i = labels.length; i < n; i++) sheet.appendChild(labels[0].cloneNode(true));
     while (sheet.querySelectorAll('.label').length > n) sheet.removeChild(sheet.lastChild);
     renderLabels();
   });

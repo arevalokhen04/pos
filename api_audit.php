@@ -1,8 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Audit trail API (admin / super admin)
- * GET action=list [&search=&limit=]
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_role('admin', 'super_admin');

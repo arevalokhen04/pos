@@ -1,12 +1,12 @@
 <?php
-/** MARINA'S HARDWARE POS - Cashier POS (Vue 3) */
+
 require __DIR__ . '/db.php';
 $user = current_user();
 if (!$user) {
     header('Location: Login.php');
     exit;
 }
-/* POS access: cashier + super admin (ang may-ari ay pwede ring magbenta) */
+
 if (!in_array($user['role'], ['cashier', 'super_admin'], true)) {
     header('Location: admin.php');
     exit;
@@ -368,7 +368,7 @@ createApp({
   setup() {
     const me = ME;
 
-    /* ── i18n: language selector (English / Filipino) ── */
+    
     const lang = ref(localStorage.getItem('mh_lang') || 'en');
     function saveLang() { localStorage.setItem('mh_lang', lang.value); }
     const FIL = {
@@ -414,10 +414,10 @@ createApp({
     const search = ref('');
     const scanInput = ref(null);
 
-    /* cart — persisted to localStorage so F5 / accidental refresh keeps the current sale */
+    
     const savedCart = JSON.parse(localStorage.getItem('mh_cart') || '[]');
     const cart = ref(Array.isArray(savedCart) ? savedCart.filter(i => i && i.id && i.qty > 0) : []);
-    const cartOpen = ref(false); // mobile drawer
+    const cartOpen = ref(false); 
     const discount = ref(Number(localStorage.getItem('mh_discount') || 0));
     function persistCart() {
       localStorage.setItem('mh_cart', JSON.stringify(cart.value));
@@ -440,12 +440,12 @@ createApp({
     const unread = ref(0);
 
 
-    /* receipt history (scoped to current shift) */
+    
     const hist = reactive({ open: false, loading: false, list: [], scope: 'shift', total: 0, count: 0 });
-    /* receipt preview (view before print) */
+    
     const preview = reactive({ open: false, loading: false, url: '', saleId: 0, receiptNo: '' });
 
-    /* helpers */
+    
     const fmtP = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtT = s => s ? new Date(s.replace(' ', 'T')).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' }) : '';
     const initials = computed(() => me.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase());
@@ -475,8 +475,8 @@ createApp({
     }
     const toast = (icon, title) => Swal.fire({ icon, title, toast: true, position: 'top-end', showConfirmButton: false, timer: 2600 });
 
-    /* products */
-    /* products — filtered live; multi-word search: every word must match name or barcode */
+    
+    
     const filtered = computed(() => {
       let list = products.value;
       const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean);
@@ -494,7 +494,7 @@ createApp({
       const r = await api('api_inventory_v2.php?action=list&category=' + cat.value);
       if (r.success) {
         products.value = r.products;
-        // reconcile a restored cart with fresh stock/prices (e.g. after F5)
+        
         if (cart.value.length) {
           const byId = {};
           products.value.forEach(p => byId[p.id] = p);
@@ -519,7 +519,7 @@ createApp({
       if (r.success) cats.value = r.categories;
     }
 
-    /* cart */
+    
     const cartCount = computed(() => cart.value.reduce((s, i) => s + i.qty, 0));
     const subtotal = computed(() => cart.value.reduce((s, i) => s + i.price * i.qty, 0));
     const total = computed(() => Math.max(0, subtotal.value - (discount.value || 0)));
@@ -530,7 +530,7 @@ createApp({
       return [...new Set(bills.filter(b => b >= t).concat(bills.slice(-2)))].slice(0, 4);
     });
 
-    /* available stock = real stock minus what's already reserved in the cart */
+    
     function inCartQty(pid) {
       const it = cart.value.find(i => i.id === pid);
       return it ? it.qty : 0;
@@ -541,7 +541,7 @@ createApp({
     function addToCart(p) {
       if (!session.open) return toast('warning', 'Please clock in first to start selling');
       if (p.display_qty <= 0) return toast('warning', p.name + ' is out of stock on the display shelves');
-      if (window.innerWidth <= 1000) cartOpen.value = true; // slide the cart in on small screens
+      if (window.innerWidth <= 1000) cartOpen.value = true; 
       const found = cart.value.find(i => i.id === p.id);
       if (found) {
         if (found.qty >= p.display_qty) return toast('warning', 'Only ' + p.display_qty + ' ' + p.unit + ' on display');
@@ -560,9 +560,8 @@ createApp({
       persistCart();
     }
 
-    /* direct cart removal — walang password prompt */
-    /* void password gate — verified SERVER-SIDE via api_session.php?action=void_auth
-       (VOID_PASSWORD lives in db.php; 5 wrong tries = 60s lock, denials are audit-logged) */
+    
+    
     async function askVoidPassword(title) {
       const res = await Swal.fire({
         title: '\ud83d\udd10 ' + title,
@@ -599,11 +598,11 @@ createApp({
         toast('success', 'Cart cleared.');
       });
     }
-    /* typed quantity: clamp to 1..stock, live-update totals */
+    
     function setQty(i, val) {
       const it = cart.value[i];
       let n = parseInt(val, 10);
-      if (isNaN(n)) return;                    // let them finish typing
+      if (isNaN(n)) return;                    
       if (n < 1) n = 1;
       if (n > it.stock) {
         n = it.stock;
@@ -612,8 +611,7 @@ createApp({
       it.qty = n;
       persistCart();
     }
-    /* barcode scan → add to cart; kapag hindi tumugma, i-refresh muna ang
-       product list (bago kasing product ang maaaring na-approve lang) tapos try ulit */
+    
     async function scanEnter() {
       const s = search.value.trim();
       if (!s) return;
@@ -633,9 +631,9 @@ createApp({
       }
     }
 
-    /* checkout */
+    
     function openCheckout() {
-      tendered.value = 0;                 // cashier types the amount received (quick-cash buttons: Exact / bills / Round)
+      tendered.value = 0;                 
       payMethod.value = 'cash';
       payModal.value = true;
       setTimeout(() => tenderInput.value?.focus(), 120);
@@ -660,10 +658,10 @@ createApp({
         persistCart();
         loadProducts();
         loadUnread();
-        if (hist.open) loadHistory(); // keep history fresh while it's open
+        if (hist.open) loadHistory(); 
       } else {
         toast('error', r.message);
-        loadProducts(); // stock may have changed
+        loadProducts(); 
       }
     }
     function printReceipt() {
@@ -671,7 +669,7 @@ createApp({
     }
     function newSale() { lastSale.value = null; scanInput.value?.focus(); }
 
-    /* session */
+    
     async function loadSession() {
       const r = await api('api_session.php?action=status');
       if (r.success) session.open = r.open_session;
@@ -717,12 +715,12 @@ createApp({
         confirmButtonColor: '#16a34a', confirmButtonText: 'Clock out',
       });
       if (!c.isConfirmed) return;
-      /* kusang kino-compute ang inaasahang cash drawer: starting cash + kabuuang benta ng shift (mula sa history) */
+      
       await loadHistory();
       const startCash = Number(session.open?.starting_cash || 0);
       const salesTotal = Number(hist.total || 0);
       const expected = Math.round((startCash + salesTotal) * 100) / 100;
-      /* FIXED na halaga — galing mismo sa history, hindi nababago */
+      
       const c2 = await Swal.fire({
         title: 'Cash in drawer (₱)',
         html:
@@ -742,7 +740,7 @@ createApp({
       else toast('error', r.message);
     }
 
-    /* notifications */
+    
     async function loadUnread() {
       const r = await api('api_notifications.php?action=unread_count');
       if (r.success) unread.value = r.count;
@@ -765,7 +763,7 @@ createApp({
       loadUnread();
     }
 
-    /* account */
+    
     async function logout() {
       await api('auth.php?action=logout', {});
       location.href = 'Login.php';
@@ -777,7 +775,7 @@ createApp({
       loadSession();
       loadUnread();
       setInterval(loadUnread, 30000);
-      // bagong approved products ay lumalabas sa POS nang kusa (walang F5)
+      
       setInterval(loadProducts, 60000);
       document.addEventListener('click', () => { bellOpen.value = false; userOpen.value = false; });
       scanInput.value?.focus();

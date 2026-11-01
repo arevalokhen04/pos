@@ -1,12 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Cashier receipt history API
- *
- * GET ?action=history
- *   Returns the cashier's sales for the CURRENT open shift (session).
- *   History automatically "resets" every new clock-in because it is
- *   scoped by session. If no shift is open, falls back to today's sales.
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_login();
@@ -17,7 +10,6 @@ if (($_GET['action'] ?? '') !== 'history') {
 
 $pdo = db();
 
-/* current open shift */
 $st = $pdo->prepare('SELECT id FROM cashier_sessions WHERE user_id = ? AND status = "open" ORDER BY id DESC LIMIT 1');
 $st->execute([$user['id']]);
 $session = $st->fetch();
@@ -30,7 +22,7 @@ if ($session) {
     $st->execute([$session['id']]);
     $scope = 'shift';
 } else {
-    // no open shift: show today's sales by this cashier (e.g. after clocking out)
+    
     $st = $pdo->prepare("SELECT $cols FROM sales s WHERE s.cashier_id = ? AND s.created_at >= CURDATE() ORDER BY s.id DESC LIMIT 200");
     $st->execute([$user['id']]);
     $scope = 'today';
@@ -45,7 +37,7 @@ foreach ($sales as $s) {
 
 json_out([
     'success' => true,
-    'scope'   => $scope,          // 'shift' = current clock-in, 'today' = no open shift
+    'scope'   => $scope,          
     'count'   => count($sales),
     'total'   => round($total, 2),
     'sales'   => $sales,

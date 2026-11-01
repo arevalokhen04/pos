@@ -1,13 +1,8 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Checkout API
- * Validates stock, records the sale, decrements inventory,
- * fires low-stock notifications and audit trail.
- */
+
 require __DIR__ . '/db.php';
 
-/* POS sales are made by CASHIERS only — admin/super_admin sessions must
-   never create sales, so the reports stay clean per cashier */
+
 $user = require_role('cashier', 'super_admin');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -18,7 +13,7 @@ $input   = json_input();
 $items   = $input['items'] ?? [];
 $paid    = (float)($input['amount_paid'] ?? 0);
 $discount= max(0.0, (float)($input['discount'] ?? 0));
-$method  = 'cash';   // CASH ONLY — puro cash ang bayad sa counter
+$method  = 'cash';   
 
 if (!$items || !is_array($items)) {
     json_out(['success' => false, 'message' => 'Cart is empty.']);
@@ -26,7 +21,7 @@ if (!$items || !is_array($items)) {
 
 $pdo = db();
 
-/* --- cashiers must have an open shift (clock in) before selling --- */
+
 $sessionId = null;
 $st = $pdo->prepare('SELECT id FROM cashier_sessions WHERE user_id = ? AND status = "open" ORDER BY id DESC LIMIT 1');
 $st->execute([$user['id']]);
@@ -36,8 +31,7 @@ if ($sess = $st->fetch()) {
     json_out(['success' => false, 'message' => 'Please clock in first before making a sale.', 'clock_in' => true]);
 }
 
-/* --- validate + sell inside ONE transaction so concurrent checkouts
-       can never oversell the same stock (row locks + rollback on failure) --- */
+
 $ids = array_map(static fn($i) => (int)($i['product_id'] ?? 0), $items);
 $ph  = implode(',', array_fill(0, count($ids), '?'));
 
@@ -75,7 +69,7 @@ try {
         throw new RuntimeException('Cart is empty.');
     }
 
-    /* discount can never exceed the basket value */
+    
     $discount = min($discount, $total);
     $total = round($total - $discount, 2);
     if ($paid < $total) {

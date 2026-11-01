@@ -1,13 +1,7 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Batch product images mula sa Wikimedia Commons
- * Sinusuri ang bawat product na walang image, naghahanap ng totoong litrato
- * ayon sa keyword, inilaligtas sa Assets/uploads/, at inia-update ang DB.
- * Run: php batch_images.php  (resumable — nilalampasan ang may image na)
- */
+
 require __DIR__ . '/db.php';
 
-/* keyword kada product name */
 function keyword_for(string $name, string $category): string
 {
     $map = [
@@ -49,7 +43,7 @@ function keyword_for(string $name, string $category): string
     foreach ($map as $needle => $kw) {
         if (mb_strpos($lower, $needle) !== false) return $kw;
     }
-    /* fallback: category name */
+    
     return mb_strtolower($category) . ' tool hardware';
 }
 
@@ -82,7 +76,7 @@ foreach ($rows as $p) {
                 break;
             }
         }
-    } catch (Throwable $e) { /* skip */ }
+    } catch (Throwable $e) {  }
 
     if (!$thumb) { $failed[] = $p['name'] . ' (' . $kw . ')'; continue; }
 
@@ -95,7 +89,7 @@ foreach ($rows as $p) {
     $st->execute(['Assets/uploads/' . $name, $p['id']]);
     $done++;
     echo "✓ #{$p['id']} {$p['name']} <- {$kw}\n";
-    usleep(400000); /* hindi inaabuso ang Commons */
+    usleep(400000); 
 }
 
 echo "\nDONE: {$done} images | failed: " . count($failed) . "\n";

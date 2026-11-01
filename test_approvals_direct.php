@@ -1,11 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Approvals workflow test (direct DB level)
- * Creates a stock request as cashier1, approves it as admin1,
- * verifies stock changed, then cleans up. Run from the browser.
- *
- * ★ PROTECTED: super admin login required.
- */
+
 require __DIR__ . '/db.php';
 
 $me = current_user();
@@ -34,17 +28,14 @@ function step(string $label, bool $pass, string $detail = ''): void
 
 $pdo = db();
 
-/* participants */
 $admin   = $pdo->query("SELECT * FROM users WHERE username='admin1'")->fetch();
 $cashier = $pdo->query("SELECT * FROM users WHERE username='cashier1'")->fetch();
 step('Found admin + cashier users', (bool)$admin && (bool)$cashier);
 
-/* pick a product */
 $prod = $pdo->query("SELECT * FROM products WHERE status='active' ORDER BY id LIMIT 1")->fetch();
 step('Found a product to test with', (bool)$prod, $prod['name']);
 $before = (int)$prod['stock_qty'];
 
-/* 1. create request as cashier */
 $st = $pdo->prepare('INSERT INTO stock_requests (product_id, requested_by, req_type, qty, reason) VALUES (?,?,?,?,?)');
 $st->execute([$prod['id'], $cashier['id'], 'stock_in', 5, 'TEST: diagnostics restock']);
 $reqId = (int)$pdo->lastInsertId();
@@ -56,7 +47,6 @@ $notifAfter = (int)$pdo->query("SELECT COUNT(*) c FROM notifications WHERE type=
 step('Approvers were notified', $notifAfter > $notifBefore,
      ($notifAfter - $notifBefore) . ' approval notification(s) created');
 
-/* 2. approve as admin */
 $st = $pdo->prepare('UPDATE stock_requests SET status="approved", decided_by=?, decided_at=NOW() WHERE id=?');
 $st->execute([$admin['id'], $reqId]);
 $mv = $pdo->prepare('INSERT INTO inventory_movements (product_id, user_id, type, qty, notes) VALUES (?,?,"stock_in",5,?)');
@@ -66,12 +56,10 @@ $pdo->prepare('UPDATE products SET stock_qty = stock_qty + 5 WHERE id=?')->execu
 $after = (int)$pdo->query("SELECT stock_qty FROM products WHERE id=" . (int)$prod['id'])->fetch()['stock_qty'];
 step('Approving added 5 to stock', $after === $before + 5, "$before → $after");
 
-/* 3. requester got result notification */
 notify('user:' . $cashier['id'], 'approved', 'Request approved', 'TEST: your restock for ' . $prod['name'] . ' was approved');
 $gotIt = (int)$pdo->query("SELECT COUNT(*) c FROM notifications WHERE audience='user:{$cashier['id']}' AND type='approved'")->fetch()['c'];
 step('Requester notified of decision', $gotIt > 0);
 
-/* cleanup: revert stock, remove test rows */
 $pdo->prepare('UPDATE products SET stock_qty = ? WHERE id=?')->execute([$before, $prod['id']]);
 $pdo->prepare('DELETE FROM stock_requests WHERE id=?')->execute([$reqId]);
 $pdo->prepare('DELETE FROM inventory_movements WHERE notes LIKE ?')->execute(['TEST%']);

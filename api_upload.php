@@ -1,9 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Product image upload
- * POST multipart/form-data with field "image" (jpg/png/webp, max 3MB).
- * Returns { success, path } — the path is saved on the product record.
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_role('admin', 'super_admin');
@@ -19,7 +15,6 @@ if ($file['size'] > 3 * 1024 * 1024) {
     json_out(['success' => false, 'message' => 'Image is too large (max 3MB).']);
 }
 
-/* totoong image type — hindi nakikialam sa extension lang */
 $finfo = new finfo(FILEINFO_MIME_TYPE);
 $mime  = $finfo->file($file['tmp_name']);
 $map   = [

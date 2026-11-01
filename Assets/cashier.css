@@ -1,6 +1,4 @@
-/* =====================================================
-   MARINA'S HARDWARE POS - Cashier POS (green & white)
-   ===================================================== */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -34,7 +32,7 @@ body {
 
 .pos { display: flex; flex-direction: column; height: 100vh; }
 
-/* ===================== TOPBAR ===================== */
+
 .pos-top {
   background: linear-gradient(135deg, var(--green-700), var(--green-900));
   color: var(--white);
@@ -108,7 +106,7 @@ body {
 .pos-user .u-name { font-size: 13.5px; font-weight: 700; line-height: 1.15; }
 .pos-user .u-role { font-size: 11px; color: var(--green-200); }
 
-/* bell + user dropdown reuse admin styles */
+
 .bell-menu, .user-menu {
   position: absolute; right: 0; top: 50px;
   width: 370px; max-width: 92vw;
@@ -152,10 +150,10 @@ body {
 .user-menu button.danger { color: var(--danger); }
 .user-menu button.danger:hover { background: var(--danger-bg); }
 
-/* ===================== BODY ===================== */
+
 .pos-body { display: grid; grid-template-columns: 1fr 400px; flex: 1; min-height: 0; }
 
-/* ---------- left: products ---------- */
+
 .prod-side { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 18px 20px; gap: 14px; }
 
 .scan-row { display: flex; gap: 10px; }
@@ -258,7 +256,7 @@ body {
   border-radius: 99px;
 }
 
-/* ---------- right: cart ---------- */
+
 .cart-side {
   background: var(--white);
   border-left: 1px solid var(--line);
@@ -285,7 +283,7 @@ body {
   font-size: 13.5px; line-height: 2;
 }
 .cart-empty .big { font-size: 44px; }
-/* table-style cart: Name of product | Price | Quantity */
+
 .cart-head-row {
   display: grid;
   grid-template-columns: 52px minmax(0,1fr) 70px 122px;
@@ -400,7 +398,7 @@ body {
 .btn-checkout:hover { filter: brightness(1.07); transform: translateY(-1px); }
 .btn-checkout:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
-/* ===================== MODALS ===================== */
+
 .modal-mask {
   position: fixed; inset: 0;
   background: rgba(15,23,42,.55);
@@ -480,7 +478,7 @@ body {
 .success-actions { display: flex; gap: 10px; }
 .success-actions .btn { flex: 1; padding: 12px; }
 
-/* receipt preview inside success modal */
+
 .receipt-preview {
   font-family: 'Courier New', monospace;
   font-size: 12px;
@@ -502,7 +500,7 @@ body {
 }
 .cart-toggle { display: none; }
 
-/* ===================== LOCK OVERLAY (pre clock-in) ===================== */
+
 .pos-body { position: relative; }
 .lock-overlay {
   position: absolute; inset: 0;
@@ -526,7 +524,7 @@ body {
 .lock-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; color: var(--green-900); }
 .lock-card p { color: var(--ink-soft); font-size: 13.5px; line-height: 1.6; margin-bottom: 18px; }
 
-/* ===================== TABLES (history modal) ===================== */
+
 table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tbl th {
   background: var(--green-50);
@@ -555,7 +553,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .b-green { background: var(--green-100); color: var(--green-800); }
 .b-amber { background: #fffbeb; color: #b45309; }
 
-/* ===================== RECEIPT PREVIEW (history modal) ===================== */
+
 .receipt-frame {
   width: 100%;
   height: 500px;
@@ -564,7 +562,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   background: #fff;
 }
 
-/* ─── language selector (styled pill + themed dropdown) ─── */
+
 .lang-wrap{
   position:relative;user-select:none;-webkit-user-select:none;
   display:inline-flex;align-items:center;gap:7px;
@@ -598,7 +596,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .lang-opt.on{background:#eef8f1;color:#16a34a;font-weight:800}
 .lang-opt .chk{font-size:12px}
 
-/* dark topbar variant */
+
 .pos-top .lang-wrap{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.35);box-shadow:none}
 .pos-top .lang-wrap:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.6)}
 .pos-top .lang-wrap.open{box-shadow:0 0 0 3px rgba(255,255,255,.18)}

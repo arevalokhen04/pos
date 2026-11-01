@@ -1,18 +1,12 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Database connection & shared helpers
- *
- * ★ EDIT THE VALUES BELOW WHEN DEPLOYING ONLINE (see README.md):
- *   DB_HOST / DB_NAME / DB_USER / DB_PASS  -> your hosting MySQL credentials
- *   VOID_PASSWORD                          -> password cashiers must enter to void a cart item
- */
+
 declare(strict_types=1);
 
 date_default_timezone_set('Asia/Manila');
 
-/* ===== Product image helpers (awtomatikong litrato mula sa Wikimedia Commons) ===== */
 
-/* Gagawing keyword ang product name — tanggalin ang mga sukat/numero */
+
+
 function image_keyword(string $name, string $category): string
 {
     $clean = preg_replace('/\d+([.,]\d+)?\s*(mm|cm|m|kg|g|ml|l|lbs|pcs?|pack|set|ft|in|inch|inches|oz|roll|pair|box|bag|can|bottle)?/i', ' ', $name);
@@ -24,8 +18,7 @@ function image_keyword(string $name, string $category): string
     return implode(' ', $words) ?: 'hardware tool';
 }
 
-/* Kukuha ng totoong litrato mula sa Wikimedia Commons at isasave sa product.
-   Tahimik na nabibigo (fallback pa rin ang emoji) — hindi nasisira ang flow. */
+
 function auto_product_image(int $productId, string $name, string $category): void
 {
     try {
@@ -58,11 +51,11 @@ function auto_product_image(int $productId, string $name, string $category): voi
         $st = db()->prepare('UPDATE products SET image = ? WHERE id = ?');
         $st->execute(['Assets/uploads/' . $fname, $productId]);
     } catch (Throwable $e) {
-        /* tahimik na fallback — emoji ang gagamitin */
+        
     }
 }
 
-/* POS data should never be cached by the browser — laging fresh */
+
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
@@ -70,7 +63,7 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'posinventory');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('VOID_PASSWORD', 'admin123'); // change this before going online
+define('VOID_PASSWORD', 'admin123'); 
 
 function db(): PDO
 {
@@ -97,7 +90,7 @@ function db(): PDO
     return $pdo;
 }
 
-/* Hardened session start: HttpOnly + SameSite cookies (secure flag turns on automatically under HTTPS) */
+
 function mh_session_start(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -113,7 +106,7 @@ function mh_session_start(): void
     }
 }
 
-/* ---------- JSON helpers ---------- */
+
 
 function json_out(array $data, int $code = 200): void
 {
@@ -131,7 +124,7 @@ function json_input(): array
     return is_array($data) ? $data : [];
 }
 
-/* ---------- Auth helpers (session based) ---------- */
+
 
 function current_user(): ?array
 {
@@ -170,7 +163,7 @@ function require_role(string ...$roles): array
     return $user;
 }
 
-/* ---------- Audit log ---------- */
+
 
 function audit_log(?array $user, string $action, string $entity = null, int $entityId = null, string $details = null): void
 {
@@ -189,15 +182,9 @@ function audit_log(?array $user, string $action, string $entity = null, int $ent
     ]);
 }
 
-/* ---------- Notifications ---------- */
 
-/**
- * Push a notification to a specific audience:
- *   'role:super_admin' → approval requests & new registrations
- *   'role:admin'       → low-stock alerts (admins file the restock requests)
- *   'user:<id>'        → direct message (e.g. decision on your request)
- * Each notification goes ONLY to the given audience — no mirroring.
- */
+
+
 function notify(string $audience, string $type, string $title, string $message, string $link = null): void
 {
     $st = db()->prepare(
@@ -206,7 +193,7 @@ function notify(string $audience, string $type, string $title, string $message, 
     $st->execute([$audience, $type, $title, mb_substr($message, 0, 400), $link]);
 }
 
-/** Create a low-stock notification once when a product falls to/below its reorder level. */
+
 function check_low_stock(int $productId): void
 {
     $st = db()->prepare(
@@ -217,7 +204,7 @@ function check_low_stock(int $productId): void
     if (!$p || (int)$p['display_qty'] > (int)$p['reorder_level']) {
         return;
     }
-    // avoid spamming: skip if an unread low-stock notice exists for this product
+    
     $chk = db()->prepare(
         "SELECT id FROM notifications
           WHERE type = 'low_stock' AND is_read = 0 AND message LIKE ?

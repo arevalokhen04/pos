@@ -1,11 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Notifications API
- * GET  list | unread_count
- * POST mark_read | mark_all_read | clear
- *
- * Audience matching: 'user:<id>' for me personally, 'role:<my role>'.
- */
+
 require __DIR__ . '/db.php';
 
 $user   = require_login();

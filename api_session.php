@@ -1,8 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Cashier session API (clock in / clock out)
- * Actions: status | clock_in | clock_out
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_login();
@@ -46,8 +43,7 @@ switch ($action) {
         if (!$sess) {
             json_out(['success' => false, 'message' => 'No open session to clock out.']);
         }
-        /* ending cash is AUTHORITATIVE from the shift history: starting cash + total shift sales.
-           The client value is ignored — hindi ito nababago. */
+        
         $ss = db()->prepare('SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE session_id = ?');
         $ss->execute([(int)$sess['id']]);
         $endingCash = round((float)$sess['starting_cash'] + (float)$ss->fetchColumn(), 2);
@@ -59,7 +55,7 @@ switch ($action) {
         json_out(['success' => true, 'message' => 'Clocked out at ' . date('g:i A')]);
 
     case 'void_auth':
-        /* server-side check of the void/delete password (never trust the browser with it) */
+        
         mh_session_start();
         if (!empty($_SESSION['void_lock']) && time() < $_SESSION['void_lock']) {
             json_out(['success' => false, 'message' => 'Too many attempts. Try again in ' . ceil($_SESSION['void_lock'] - time()) . ' seconds.']);

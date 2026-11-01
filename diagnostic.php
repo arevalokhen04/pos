@@ -1,11 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Standalone diagnostic page
- * Checks PHP version, DB connection, tables, seed data and API reachability.
- * Also offers demo data generation (seed_data.php).
- *
- * ★ PROTECTED: admin / super admin login required (exposes system info).
- */
+
 require __DIR__ . '/db.php';
 
 $me = current_user();
@@ -19,12 +13,10 @@ if (!$me || !in_array($me['role'], ['admin', 'super_admin'], true)) {
 $checks = [];
 $ok = fn($c) => $c ? '✅' : '❌';
 
-/* PHP */
 $checks[] = ['PHP version', PHP_VERSION, version_compare(PHP_VERSION, '8.0.0', '>=')];
 $checks[] = ['PDO MySQL driver', extension_loaded('pdo_mysql') ? 'loaded' : 'missing', extension_loaded('pdo_mysql')];
 $checks[] = ['Timezone', date_default_timezone_get(), true];
 
-/* DB */
 try {
     $pdo = db();
     $checks[] = ['Database connection', DB_NAME . ' @ ' . DB_HOST, true];

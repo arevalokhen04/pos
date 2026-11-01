@@ -1,6 +1,4 @@
-/* =====================================================
-   MARINA'S HARDWARE POS - Login (green & white theme)
-   ===================================================== */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -26,7 +24,6 @@ body {
   min-height: 100vh;
 }
 
-/* ---------- layout: green panel + white form ---------- */
 .login-wrap {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -92,7 +89,6 @@ body {
 }
 .brand-foot { margin-top: 44px; font-size: 13px; opacity: .75; }
 
-/* ---------- form side ---------- */
 .form-side {
   background: var(--white);
   display: flex;
@@ -111,7 +107,6 @@ body {
   margin-bottom: 26px;
 }
 
-/* already-signed-in notice */
 .signedin-note {
   border: 1.5px solid var(--green-200);
   background: var(--green-50);

@@ -1,5 +1,5 @@
 <?php
-/** MARINA'S HARDWARE POS - Login page (Vue 3) */
+
 require __DIR__ . '/db.php';
 $LOGGED = current_user();
 $LOGGED_HOME = null;

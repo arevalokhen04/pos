@@ -1,13 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Thermal receipt printer (80mm)
- * Styled like a real Philippine hardware-store Official Receipt:
- * store header w/ TIN, itemized lines with @ unit prices,
- * VAT breakdown, cash tendered & change, return policy footer.
- *
- * Open:  api_print.php?sale_id=123  -> auto window.print()
- * Cashiers may only reprint their own receipts.
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_login();
@@ -33,10 +25,10 @@ $st = db()->prepare(
 $st->execute([$saleId]);
 $items = $st->fetchAll();
 
-/* VAT computation (prices are VAT-inclusive at 12%) */
+
 $total       = (float)$sale['total_amount'];
 $discount    = (float)$sale['discount'];
-$gross       = $total + $discount;      // before discount
+$gross       = $total + $discount;      
 $vatable     = $gross / 1.12;
 $vat         = $gross - $vatable;
 ?>

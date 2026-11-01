@@ -1,14 +1,5 @@
 <?php
-/**
- * MARINA'S HARDWARE POS - Backup & Restore API (super admin only)
- *
- * Backup Module : create (manual) · auto_check (daily automatic) · download · delete · verify
- * Restore Module: restore_server · restore (upload) — safety backup muna + confirmation "RESTORE"
- * Settings      : auto-backup enable/disable, frequency, retention period
- * History       : backup_history table — File · Date & Time · Action · Type · Status
- * Activity Logs : backup, restore, download, delete, reset — naka-log sa audit_logs
- * Danger Zone   : Factory Reset (super admin only, double confirmation)
- */
+
 require __DIR__ . '/db.php';
 
 $user = require_role('super_admin');
@@ -16,7 +7,7 @@ $dir  = __DIR__ . '/backups';
 if (!is_dir($dir)) mkdir($dir, 0775, true);
 $settingsFile = $dir . '/auto_settings.json';
 
-/* ─── helpers ─── */
+
 
 function log_history(string $file, string $action, string $type, string $status, string $note, array $user): void
 {
@@ -64,7 +55,7 @@ function save_auto_settings(array $settings): void
     file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT));
 }
 
-/* Auto-backup: nilalapat ang retention period — buburahin ang lumang auto backups */
+
 function run_auto_backup(): array
 {
     global $dir;
@@ -78,7 +69,7 @@ function run_auto_backup(): array
     $name = 'backup_auto_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $name);
 
-    /* retention: burahin ang mga auto backup na mas lumang sa retention_days */
+    
     $retention = max(1, (int)($settings['retention_days'] ?? 7));
     $cutoff = time() - ($retention * 86400);
     foreach (glob($dir . '/backup_auto_*.sql') as $old) {
@@ -90,7 +81,7 @@ function run_auto_backup(): array
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
-/* ═══════════════ OVERVIEW ═══════════════ */
+
 if ($action === 'overview') {
     $files   = glob($dir . '/*.sql');
     rsort($files);
@@ -114,7 +105,7 @@ if ($action === 'overview') {
     ]);
 }
 
-/* ═══════════════ AUTO-BACKUP SETTINGS ═══════════════ */
+
 if ($action === 'auto_settings') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $in = json_input();
@@ -130,7 +121,7 @@ if ($action === 'auto_settings') {
     json_out(['success' => true, 'settings' => get_auto_settings()]);
 }
 
-/* ═══════════════ AUTO CHECK (lazy daily trigger) ═══════════════ */
+
 if ($action === 'auto_check') {
     $settings = get_auto_settings();
     if (!$settings['enabled']) {
@@ -147,7 +138,7 @@ if ($action === 'auto_check') {
     json_out(['success' => true, 'created' => true, 'message' => 'Daily automatic backup created: ' . $name, 'file' => $name]);
 }
 
-/* ═══════════════ BACKUP LIST + HISTORY ═══════════════ */
+
 if ($action === 'list') {
     $files = glob($dir . '/*.sql');
     rsort($files);
@@ -163,7 +154,7 @@ if ($action === 'list') {
     json_out(['success' => true, 'backups' => $list, 'history' => $history]);
 }
 
-/* ═══════════════ CREATE MANUAL BACKUP ═══════════════ */
+
 if ($action === 'create') {
     $name = 'backup_manual_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $name);
@@ -172,7 +163,7 @@ if ($action === 'create') {
     json_out(['success' => true, 'message' => 'Backup created: ' . $name, 'file' => $name]);
 }
 
-/* ═══════════════ DOWNLOAD ═══════════════ */
+
 if ($action === 'download') {
     $name = basename($_GET['file'] ?? '');
     $path = $dir . '/' . $name;
@@ -185,7 +176,7 @@ if ($action === 'download') {
     exit;
 }
 
-/* ═══════════════ VERIFY BACKUP ═══════════════ */
+
 if ($action === 'verify') {
     $in   = json_input();
     $name = basename($in['file'] ?? '');
@@ -206,7 +197,7 @@ if ($action === 'verify') {
     json_out(['success' => true, 'valid' => $valid, 'checks' => $checks, 'message' => $valid ? 'Backup file is valid and complete.' : 'Backup file is incomplete or corrupted.']);
 }
 
-/* ═══════════════ DELETE ═══════════════ */
+
 if ($action === 'delete') {
     $in   = json_input();
     $name = basename($in['file'] ?? '');
@@ -217,7 +208,7 @@ if ($action === 'delete') {
     json_out(['success' => true, 'message' => 'Backup deleted: ' . $name]);
 }
 
-/* ═══════════════ SAFETY BACKUP ═══════════════ */
+
 if ($action === 'safety') {
     $name = 'backup_safety_before_restore_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $name);
@@ -225,7 +216,7 @@ if ($action === 'safety') {
     json_out(['success' => true, 'file' => $name]);
 }
 
-/* ═══════════════ RESTORE (server-side saved backup) ═══════════════ */
+
 if ($action === 'restore_server') {
     $in      = json_input();
     $name    = basename($in['file'] ?? '');
@@ -236,7 +227,7 @@ if ($action === 'restore_server') {
     $path = $dir . '/' . $name;
     if (!is_file($path)) json_out(['success' => false, 'message' => 'Backup not found.'], 404);
 
-    /* safety backup muna ng kasalukuyang data */
+    
     $safety = 'backup_safety_before_restore_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $safety);
     log_history($safety, 'safety', 'auto', 'successful', 'Safety backup before restore of ' . $name, $user);
@@ -263,7 +254,7 @@ if ($action === 'restore_server') {
     }
 }
 
-/* ═══════════════ RESTORE (uploaded backup file) ═══════════════ */
+
 if ($action === 'restore') {
     $confirm = trim($_POST['confirm'] ?? '');
     if (empty($_FILES['sqlfile']) || $_FILES['sqlfile']['error'] !== UPLOAD_ERR_OK) {
@@ -298,12 +289,12 @@ if ($action === 'restore') {
     }
 }
 
-/* ═══════════════ DANGER ZONE: FACTORY RESET ═══════════════ */
+
 if ($action === 'factory_reset') {
     $in       = json_input();
     $password = (string)($in['password'] ?? '');
 
-    /* i-verify ang password ng naka-login na super admin (fresh mula sa DB) */
+    
     $row = db()->prepare('SELECT password_hash FROM users WHERE id = ?');
     $row->execute([$user['id']]);
     $hash = $row->fetchColumn();
@@ -311,12 +302,12 @@ if ($action === 'factory_reset') {
         json_out(['success' => false, 'message' => 'Wrong password. Factory reset cancelled.'], 403);
     }
 
-    /* safety backup muna bago burahin — para may maibabalik pa */
+    
     $safety = 'backup_safety_before_factory_reset_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $safety);
-    /* huwag mag-log_history muna — buburahin din ang backup_history sa ibaba */
+    
 
-    /* burahin LAHAT ng transactional data + products; maiiwan lang ang default accounts at categories */
+    
     $wipe = ['sale_items', 'sales', 'inventory_movements', 'stock_requests', 'notifications',
              'cashier_sessions', 'audit_logs', 'backup_history', 'products'];
     try {
@@ -328,7 +319,7 @@ if ($action === 'factory_reset') {
         json_out(['success' => false, 'message' => 'Factory reset failed: ' . $e->getMessage()], 500);
     }
 
-    /* itala ang reset mismo — siyang unang entry sa bagong audit log */
+    
     audit_log($user, 'factory_reset', 'system', null, 'All data wiped; safety backup: ' . $safety);
     json_out(['success' => true, 'message' => 'Factory reset complete. Only default accounts remain.', 'safety' => $safety]);
 }
