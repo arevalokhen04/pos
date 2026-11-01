@@ -1,0 +1,11 @@
+# runtime data & backups (may contain password hashes — never publish)
+backups/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
+
+# temp scripts
+_*.php
+fix_images.php

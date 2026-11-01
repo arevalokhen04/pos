@@ -1,0 +1,31 @@
+/* =====================================================
+   MARINA'S HARDWARE POS - Super Admin styles
+   Extends the shared admin theme (green & white) with
+   super-admin-only touches.
+   ===================================================== */
+@import url('admin.css?v=5');
+
+/* The super admin sidebar gets the deep-green brand bar to
+   visually separate it from the plain admin panel. */
+.sidebar .brand {
+  background: linear-gradient(135deg, var(--green-700), var(--green-900));
+  margin: 0;
+  border-bottom: 0;
+}
+.sidebar .brand .b-sub { color: var(--green-200); }
+.sidebar .brand .logo-badge { background: rgba(255,255,255,.92); }
+
+/* darker green top accent on the topbar */
+.topbar { border-top: 4px solid var(--green-800); }
+
+/* role chip in the user menu */
+.user-chip .u-role { color: var(--green-800); font-weight: 800; }
+
+/* users table avatar column tweak */
+.users-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-600), var(--green-800));
+  color: #fff; font-weight: 800; font-size: 12.5px;
+  display: inline-grid; place-items: center;
+}
