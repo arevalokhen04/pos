@@ -1186,7 +1186,6 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
             <div class="modal-foot">
               <button class="btn btn-outline" @click="rcptDetail.open=false">Close</button>
-              <button class="btn btn-primary" @click="printReceiptAdmin">🖨 Print</button>
             </div>
           </div>
         </div>
@@ -2454,9 +2453,6 @@ const __app = createApp({
       rcptDetail.url = 'api_print.php?sale_id=' + s.id + '&preview=1';
       rcptDetail.open = true;
     }
-    function printReceiptAdmin() {
-      window.open('api_print.php?sale_id=' + rcptDetail.saleId, '_blank', 'width=430,height=700');
-    }
     function printReport() { window.print(); }
 
     
@@ -2737,7 +2733,7 @@ const __app = createApp({
       req, loadRequests, openRequest, submitRequest, reqTypeLabel, editDiffSummary, catIcon,
       appr, loadApprovals, decide, reqDetail, viewRequest,
       rep, setPeriod, onReportKind, loadReport, exportCSV, printReport,
-      rcptDetail, viewReceiptAdmin, printReceiptAdmin,
+      rcptDetail, viewReceiptAdmin,
       lang, saveLang, t, langOpen, pickLang, audit, loadAudit, backup, bk, loadBackups, createBackup, downloadBackup, restoreBackup, deleteBackup, fmtSize, runAutoNow, onRestoreFilePick, restoreUpload, backupActionLabel, loadOverview, loadAutoSettings, saveAutoSettings, verifyBackup, factoryReset,
       users, loadUsers, openUser, saveUser, toggleUserStatus, openResetPass, doResetPass,
       logout,
