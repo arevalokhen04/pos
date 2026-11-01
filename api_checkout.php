@@ -2,7 +2,6 @@
 
 require __DIR__ . '/db.php';
 
-
 $user = require_role('cashier', 'super_admin');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -21,7 +20,6 @@ if (!$items || !is_array($items)) {
 
 $pdo = db();
 
-
 $sessionId = null;
 $st = $pdo->prepare('SELECT id FROM cashier_sessions WHERE user_id = ? AND status = "open" ORDER BY id DESC LIMIT 1');
 $st->execute([$user['id']]);
@@ -30,7 +28,6 @@ if ($sess = $st->fetch()) {
 } elseif ($user['role'] === 'cashier') {
     json_out(['success' => false, 'message' => 'Please clock in first before making a sale.', 'clock_in' => true]);
 }
-
 
 $ids = array_map(static fn($i) => (int)($i['product_id'] ?? 0), $items);
 $ph  = implode(',', array_fill(0, count($ids), '?'));

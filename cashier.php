@@ -27,7 +27,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 <div id="app" v-cloak>
   <div class="pos">
 
-    <!-- ================= TOPBAR ================= -->
+    
     <header class="pos-top">
       <div class="brand">
         <div class="logo-badge">🔧</div>
@@ -55,7 +55,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         {{ t('🧾 History') }}
       </button>
 
-      <!-- language selector -->
+      
       <div class="lang-wrap" :class="{open: langOpen}" @click.stop="langOpen=!langOpen" title="Language / Wika">
         <span class="lang-globe">🌐</span>
         <span class="lang-cur">{{ lang === 'fil' ? 'Filipino' : 'English' }}</span>
@@ -66,7 +66,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         </div>
       </div>
 
-      <!-- bell -->
+      
       <div class="pos-bell">
         <button class="bell-btn2" @click.stop="toggleBell">🔔
           <span class="badge" v-if="unread>0">{{ unread>99?'99+':unread }}</span>
@@ -90,7 +90,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         </div>
       </div>
 
-      <!-- user -->
+      
       <div class="pos-user" @click.stop="userOpen=!userOpen">
         <div class="avatar">{{ initials }}</div>
         <div>
@@ -103,10 +103,10 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
       </div>
     </header>
 
-    <!-- ================= BODY ================= -->
+    
     <div class="pos-body">
 
-      <!-- lock screen: must clock in before selecting products -->
+      
       <div class="lock-overlay" v-if="!session.open">
         <div class="lock-card">
           <div class="big">🔒</div>
@@ -116,7 +116,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         </div>
       </div>
 
-      <!-- ===== left: products ===== -->
+      
       <section class="prod-side">
         <div class="scan-row">
           <div class="scan-box">
@@ -160,7 +160,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         </div>
       </section>
 
-      <!-- ===== right: cart ===== -->
+      
       <aside class="cart-side" :class="{open: cartOpen}">
         <div class="cart-head">
           <div><h3>{{ t('🛒 Current sale') }}</h3><div class="cnt">{{ cartCount }} {{ cartCount===1 ? t('item') : t('items') }}</div></div>
@@ -215,9 +215,9 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
     </div>
   </div>
 
-  <!-- ================= MODALS ================= -->
+  
 
-  <!-- clock in -->
+  
   <div class="modal-mask" v-if="clockModal" @click.self="clockModal=false">
     <div class="modal" style="max-width:400px">
       <div class="modal-head"><h3>{{ t('▶ Clock in') }}</h3><button class="modal-close" @click="clockModal=false">✕</button></div>
@@ -234,7 +234,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
     </div>
   </div>
 
-  <!-- checkout -->
+  
   <div class="modal-mask" v-if="payModal" @click.self="payModal=false">
     <div class="modal">
       <div class="modal-head"><h3>{{ t('💰 Checkout') }}</h3><button class="modal-close" @click="payModal=false">✕</button></div>
@@ -276,7 +276,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
     </div>
   </div>
 
-  <!-- success + receipt -->
+  
   <div class="modal-mask" v-if="lastSale">
     <div class="modal">
       <div class="success-card">
@@ -299,7 +299,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
     </div>
   </div>
 
-  <!-- receipt history (per shift) -->
+  
   <div class="modal-mask" v-if="hist.open" @click.self="hist.open=false">
     <div class="modal" style="max-width:600px">
       <div class="modal-head">
@@ -338,7 +338,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
     </div>
   </div>
 
-  <!-- receipt preview (view before printing) -->
+  
   <div class="modal-mask" v-if="preview.open" @click.self="preview.open=false">
     <div class="modal" style="max-width:430px">
       <div class="modal-head">
@@ -438,7 +438,6 @@ createApp({
     const userOpen = ref(false);
     const notifs = ref([]);
     const unread = ref(0);
-
 
     
     const hist = reactive({ open: false, loading: false, list: [], scope: 'shift', total: 0, count: 0 });

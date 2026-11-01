@@ -25,7 +25,7 @@ if ($LOGGED) {
 <div id="app" v-cloak>
   <div class="login-wrap">
 
-    <!-- ===== left branding ===== -->
+    
     <aside class="brand-side">
       <div class="brand-logo">
         <div class="logo-badge">🔧</div>
@@ -39,11 +39,11 @@ if ($LOGGED) {
       <div class="brand-foot">© <?= date('Y') ?> Marina's Hardware — POS &amp; Inventory Management System</div>
     </aside>
 
-    <!-- ===== right form ===== -->
+    
     <main class="form-side">
       <div class="login-card">
 
-        <!-- already signed in: show who + quick switch instead of silently redirecting -->
+        
         <div class="signedin-note" v-if="signedIn">
           <div class="sn-row">
             <div class="sn-avatar">{{ signedIn.initials }}</div>
@@ -65,7 +65,7 @@ if ($LOGGED) {
           <button :class="{active: tab==='register'}" @click="tab='register'">Register</button>
         </div>
 
-        <!-- LOGIN -->
+        
         <template v-if="tab==='login'">
           <h2>Welcome back 👋</h2>
           <p class="hint">Sign in to your Marina's Hardware account.</p>
@@ -94,7 +94,7 @@ if ($LOGGED) {
           </form>
         </template>
 
-        <!-- REGISTER -->
+        
         <template v-else>
           <h2>Create account</h2>
           <p class="hint">Registers as cashier — the super admin activates it.</p>

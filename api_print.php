@@ -25,7 +25,6 @@ $st = db()->prepare(
 $st->execute([$saleId]);
 $items = $st->fetchAll();
 
-
 $total       = (float)$sale['total_amount'];
 $discount    = (float)$sale['discount'];
 $gross       = $total + $discount;      
@@ -87,7 +86,7 @@ $vat         = $gross - $vatable;
 <body>
 <div class="receipt">
 
-  <!-- ================= STORE HEADER ================= -->
+  
   <div class="c">
     <div class="store"><span class="brand-color">MARINA'S</span> HARDWARE</div>
     <div class="tiny">Hardware &amp; Construction Supplies</div>
@@ -111,7 +110,7 @@ $vat         = $gross - $vatable;
 
   <div class="hr"></div>
 
-  <!-- ================= ITEMS (Qty | Unit | Description | Unit Price | Total) ================= -->
+  
   <table class="items">
     <colgroup>
       <col class="w-qty"><col class="w-unit"><col><col class="w-up"><col class="w-ta">
@@ -140,7 +139,7 @@ $vat         = $gross - $vatable;
 
   <div class="hr"></div>
 
-  <!-- ================= TOTALS ================= -->
+  
   <div class="row"><span class="l">Subtotal (VAT inclusive)</span><span class="r"><?= number_format($gross, 2) ?></span></div>
   <?php if ($discount > 0): ?>
   <div class="row"><span class="l">Less: Discount</span><span class="r">-<?= number_format($discount, 2) ?></span></div>
@@ -149,7 +148,7 @@ $vat         = $gross - $vatable;
 
   <div class="hr"></div>
 
-  <!-- TAX BREAKDOWN — VAT rate, VATable sales, total tax -->
+  
   <div class="row"><span class="l"><b>TAX BREAKDOWN</b></span><span class="r"></span></div>
   <div class="row"><span class="l">VAT Rate</span><span class="r">12%</span></div>
   <div class="row"><span class="l">VATable Sales</span><span class="r"><?= number_format($vatable, 2) ?></span></div>
@@ -165,7 +164,7 @@ $vat         = $gross - $vatable;
 
   <div class="hr-solid"></div>
 
-  <!-- ================= FOOTER ================= -->
+  
   <div class="c foot">
     <div class="tiny">Received the above goods in good condition.</div>
     <div class="tiny">Goods sold are returnable/exchangeable</div>

@@ -130,8 +130,6 @@ if ($method === 'GET') {
     }
 }
 
-
-
 switch ($action) {
 
     case 'save_product':

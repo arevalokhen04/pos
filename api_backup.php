@@ -7,8 +7,6 @@ $dir  = __DIR__ . '/backups';
 if (!is_dir($dir)) mkdir($dir, 0775, true);
 $settingsFile = $dir . '/auto_settings.json';
 
-
-
 function log_history(string $file, string $action, string $type, string $status, string $note, array $user): void
 {
     db()->prepare('INSERT INTO backup_history (file, action, type, status, note, created_by) VALUES (?, ?, ?, ?, ?, ?)')
@@ -55,7 +53,6 @@ function save_auto_settings(array $settings): void
     file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT));
 }
 
-
 function run_auto_backup(): array
 {
     global $dir;
@@ -81,7 +78,6 @@ function run_auto_backup(): array
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
-
 if ($action === 'overview') {
     $files   = glob($dir . '/*.sql');
     rsort($files);
@@ -105,7 +101,6 @@ if ($action === 'overview') {
     ]);
 }
 
-
 if ($action === 'auto_settings') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $in = json_input();
@@ -120,7 +115,6 @@ if ($action === 'auto_settings') {
     }
     json_out(['success' => true, 'settings' => get_auto_settings()]);
 }
-
 
 if ($action === 'auto_check') {
     $settings = get_auto_settings();
@@ -138,7 +132,6 @@ if ($action === 'auto_check') {
     json_out(['success' => true, 'created' => true, 'message' => 'Daily automatic backup created: ' . $name, 'file' => $name]);
 }
 
-
 if ($action === 'list') {
     $files = glob($dir . '/*.sql');
     rsort($files);
@@ -154,7 +147,6 @@ if ($action === 'list') {
     json_out(['success' => true, 'backups' => $list, 'history' => $history]);
 }
 
-
 if ($action === 'create') {
     $name = 'backup_manual_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $name);
@@ -162,7 +154,6 @@ if ($action === 'create') {
     audit_log($user, 'backup_create', 'backup', null, $name);
     json_out(['success' => true, 'message' => 'Backup created: ' . $name, 'file' => $name]);
 }
-
 
 if ($action === 'download') {
     $name = basename($_GET['file'] ?? '');
@@ -175,7 +166,6 @@ if ($action === 'download') {
     readfile($path);
     exit;
 }
-
 
 if ($action === 'verify') {
     $in   = json_input();
@@ -197,7 +187,6 @@ if ($action === 'verify') {
     json_out(['success' => true, 'valid' => $valid, 'checks' => $checks, 'message' => $valid ? 'Backup file is valid and complete.' : 'Backup file is incomplete or corrupted.']);
 }
 
-
 if ($action === 'delete') {
     $in   = json_input();
     $name = basename($in['file'] ?? '');
@@ -208,14 +197,12 @@ if ($action === 'delete') {
     json_out(['success' => true, 'message' => 'Backup deleted: ' . $name]);
 }
 
-
 if ($action === 'safety') {
     $name = 'backup_safety_before_restore_' . date('Y-m-d_His') . '.sql';
     db_dump_to($dir . '/' . $name);
     log_history($name, 'safety', 'auto', 'successful', 'Safety backup before restore', $user);
     json_out(['success' => true, 'file' => $name]);
 }
-
 
 if ($action === 'restore_server') {
     $in      = json_input();
@@ -254,7 +241,6 @@ if ($action === 'restore_server') {
     }
 }
 
-
 if ($action === 'restore') {
     $confirm = trim($_POST['confirm'] ?? '');
     if (empty($_FILES['sqlfile']) || $_FILES['sqlfile']['error'] !== UPLOAD_ERR_OK) {
@@ -288,7 +274,6 @@ if ($action === 'restore') {
         json_out(['success' => false, 'message' => 'Restore failed: ' . $e->getMessage()], 500);
     }
 }
-
 
 if ($action === 'factory_reset') {
     $in       = json_input();

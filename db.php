@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 date_default_timezone_set('Asia/Manila');
 
-
-
-
 function image_keyword(string $name, string $category): string
 {
     $clean = preg_replace('/\d+([.,]\d+)?\s*(mm|cm|m|kg|g|ml|l|lbs|pcs?|pack|set|ft|in|inch|inches|oz|roll|pair|box|bag|can|bottle)?/i', ' ', $name);
@@ -18,14 +15,14 @@ function image_keyword(string $name, string $category): string
     return implode(' ', $words) ?: 'hardware tool';
 }
 
-
 function auto_product_image(int $productId, string $name, string $category): void
 {
     try {
         $kw  = image_keyword($name, $category);
         $api = 'https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='
              . rawurlencode($kw) . '&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url|mime&iiurlwidth=320&format=json';
-        $ctx = stream_context_create(['http' => ['header' => "User-Agent: MarinasPOS/1.0 (school project)
+        $ctx = stream_context_create(['http' => ['header' => "User-Agent: MarinasPOS/1.0 (school project)
+
 ", 'timeout' => 20]]);
 
         $data  = json_decode(@file_get_contents($api, false, $ctx), true);
@@ -54,7 +51,6 @@ function auto_product_image(int $productId, string $name, string $category): voi
         
     }
 }
-
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
@@ -90,7 +86,6 @@ function db(): PDO
     return $pdo;
 }
 
-
 function mh_session_start(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -105,8 +100,6 @@ function mh_session_start(): void
         session_start();
     }
 }
-
-
 
 function json_out(array $data, int $code = 200): void
 {
@@ -123,8 +116,6 @@ function json_input(): array
     $data = json_decode($raw ?: '[]', true);
     return is_array($data) ? $data : [];
 }
-
-
 
 function current_user(): ?array
 {
@@ -163,8 +154,6 @@ function require_role(string ...$roles): array
     return $user;
 }
 
-
-
 function audit_log(?array $user, string $action, string $entity = null, int $entityId = null, string $details = null): void
 {
     $st = db()->prepare(
@@ -182,9 +171,6 @@ function audit_log(?array $user, string $action, string $entity = null, int $ent
     ]);
 }
 
-
-
-
 function notify(string $audience, string $type, string $title, string $message, string $link = null): void
 {
     $st = db()->prepare(
@@ -192,7 +178,6 @@ function notify(string $audience, string $type, string $title, string $message, 
     );
     $st->execute([$audience, $type, $title, mb_substr($message, 0, 400), $link]);
 }
-
 
 function check_low_stock(int $productId): void
 {

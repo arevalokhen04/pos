@@ -38,7 +38,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
 <body>
 <div id="app" v-cloak>
 
-  <!-- ================= SIDEBAR ================= -->
+  
   <aside class="sidebar" :class="{open: sideOpen}">
     <div class="brand">
       <div class="logo-badge">🔧</div>
@@ -104,7 +104,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     <div class="side-foot">Marina's Hardware POS v1.0</div>
   </aside>
 
-  <!-- ================= MAIN ================= -->
+  
   <div class="main">
     <header class="topbar">
       <button class="menu-toggle" @click="sideOpen=!sideOpen">☰</button>
@@ -114,7 +114,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
       </div>
       <div class="spacer"></div>
 
-      <!-- language selector -->
+      
       <div class="lang-wrap" :class="{open: langOpen}" @click.stop="langOpen=!langOpen" title="Language / Wika">
         <span class="lang-globe">🌐</span>
         <span class="lang-cur">{{ lang === 'fil' ? 'Filipino' : 'English' }}</span>
@@ -125,7 +125,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </div>
 
-      <!-- notification bell -->
+      
       <div class="bell-wrap">
         <button class="bell-btn" @click.stop="toggleBell" title="Notifications">
           🔔
@@ -156,7 +156,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </div>
 
-      <!-- user chip -->
+      
       <div class="user-chip" @click.stop="userMenuOpen=!userMenuOpen">
         <div class="avatar">{{ initials }}</div>
         <div>
@@ -171,9 +171,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
 
     <div class="content" @click="sideOpen=false">
 
-      <!-- =========================================================
-           DASHBOARD
-      ========================================================== -->
+      
       <template v-if="view==='dashboard'">
         <div class="stat-grid">
           <div class="stat-card clickable" @click="goSalesReport" :title="t('View Sales Reports')">
@@ -237,7 +235,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- INVENTORY REPORT summary (super admin) — click-through sa buong report -->
+        
         <div class="card" v-if="isSuper">
           <div class="card-head">
             <div><h3>{{ t('📦 Inventory Report') }}</h3><div class="sub">{{ t('Fast & slow moving products — summary') }}</div></div>
@@ -293,7 +291,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- Latest transactions + Top products (analytics) -->
+        
         <div class="grid-2">
           <div class="card">
             <div class="card-head">
@@ -354,12 +352,10 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             <div class="loading-row" v-else>Loading activity…</div>
           </div>
         </div>
-        </div><!-- /sales report -->
+        </div>
       </template>
 
-      <!-- =========================================================
-           INVENTORY (admin only — super admin has the Inventory Report)
-      ========================================================== -->
+      
       <template v-if="view==='inventory'">
         <div class="card">
           <div class="card-head">
@@ -440,7 +436,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- read-only: parehong stocks at display sa isang tingnan -->
+        
         <div class="card">
           <div class="card-head">
             <div><h3>📋 Inventory items</h3><div class="sub">Buong tingnan — stocks at display kada product</div></div>
@@ -464,9 +460,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           STOCKS & DISPLAY (admin — bawat pagbabago may approval)
-      ========================================================== -->
+      
       <template v-if="view==='stocksdisplay'">
         <div class="page-head">
           <div><h2>🏬 Stocks &amp; Display</h2><div class="sub"></div></div>
@@ -569,9 +563,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           MY REQUESTS
-      ========================================================== -->
+      
       <template v-if="view==='requests'">
         <div class="page-head">
           <div><h2>📝 My stock requests</h2><div class="sub">Requests you filed that are still pending approval</div></div>
@@ -628,9 +620,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           APPROVALS
-      ========================================================== -->
+      
       <template v-if="view==='approvals'">
         <div class="page-head">
           <div><h2>✅ Approvals</h2><div class="sub">Stock requests waiting for your decision + full history</div></div>
@@ -696,9 +686,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           REPORTS  ★
-      ========================================================== -->
+      
       <template v-if="view==='reports'">
         <div class="page-head no-print">
           <div><h2>{{ rep.kind==='inventory' ? '📦 Inventory Report' : '📈 Sales Reports' }}</h2><div class="sub">{{ rep.kind==='inventory' ? 'Fast & slow moving products — know what to restock and what not to overstock' : 'Daily, weekly, monthly, overall & custom range' }}</div></div>
@@ -714,7 +702,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- ================= INVENTORY REPORT (super admin) ================= -->
+        
         <div v-if="rep.kind==='inventory' && isSuper">
           <div class="report-controls no-print">
             <div class="period-pills">
@@ -826,7 +814,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- ================= SALES REPORT ================= -->
+        
         <div v-if="rep.kind==='sales'">
         <div class="report-controls no-print">
           <div class="period-pills">
@@ -859,7 +847,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           <div class="card-body report-title">{{ rep.data?.summary?.label || 'Loading…' }}</div>
         </div>
 
-        <!-- KPI cards -->
+        
         <div class="kpi-grid" v-if="rep.data">
           <div class="kpi"><div class="k-cap">Total Revenue</div><div class="k-val">{{ fmtP(rep.data.summary.revenue) }}</div></div>
           <div class="kpi alt1"><div class="k-cap">Gross Profit</div><div class="k-val">{{ fmtP(rep.data.summary.profit) }}</div></div>
@@ -869,14 +857,14 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           <div class="kpi alt2"><div class="k-cap">Discounts Given</div><div class="k-val">{{ fmtP(rep.data.summary.discounts) }}</div></div>
         </div>
 
-        <!-- chart -->
+        
         <div class="card">
           <div class="card-head"><div><h3>Sales &amp; profit trend</h3><div class="sub">Bars = revenue · line = gross profit</div></div></div>
           <div class="card-body"><div class="chart-box"><canvas id="repChart"></canvas></div></div>
         </div>
 
         <div class="grid-2">
-          <!-- top products -->
+          
           <div class="card">
             <div class="card-head"><h3>🏆 Top products</h3></div>
             <div class="table-wrap">
@@ -896,7 +884,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- by cashier -->
+          
           <div class="card">
             <div class="card-head"><h3>🧑‍💼 Sales per cashier</h3></div>
             <div class="table-wrap">
@@ -916,7 +904,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
 
         <div class="grid-2">
-          <!-- by category -->
+          
           <div class="card">
             <div class="card-head"><h3>🗂 Sales per category</h3></div>
             <div class="table-wrap">
@@ -934,7 +922,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- recent transactions -->
+          
           <div class="card">
             <div class="card-head"><h3>🧾 Recent transactions</h3></div>
             <div class="table-wrap">
@@ -956,7 +944,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- receipt preview (admin reports) -->
+        
         <div class="modal-mask" v-if="rcptDetail.open" @click.self="rcptDetail.open=false">
           <div class="modal" style="max-width:430px">
             <div class="modal-head">
@@ -974,11 +962,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-
-      <!-- =========================================================
-           AUDIT TRAIL
-      ========================================================== -->
+      
       <template v-if="view==='audit'">
         <div class="page-head">
           <div><h2>📜 History Logs</h2><div class="sub">Every important action is logged here</div></div>
@@ -1015,9 +999,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           USERS (super admin)
-      ========================================================== -->
+      
       <template v-if="view==='users' && isSuper">
         <div class="page-head">
           <div><h2>👥 User Management</h2><div class="sub">{{ users.list.length }} accounts</div></div>
@@ -1056,11 +1038,9 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
       </template>
 
-      <!-- =========================================================
-           BACKUP & RESTORE (super admin)
-      ========================================================== -->
+      
       <template v-if="view==='backup' && isSuper">
-          <!-- ═══ OVERVIEW CARDS ═══ -->
+          
           <div class="stat-grid" style="margin-bottom:20px">
             <div class="stat-card">
               <div class="stat-ico">🕐</div>
@@ -1080,7 +1060,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- ═══ BACKUP MANAGEMENT ═══ -->
+          
           <div class="card">
             <div class="card-head">
               <div><h3>{{ t('💾 Backup Management') }}</h3><div class="sub">{{ t('Create, download, and manage backups') }}</div></div>
@@ -1113,7 +1093,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- ═══ AUTOMATIC BACKUP SETTINGS ═══ -->
+          
           <div class="card">
             <div class="card-head">
               <div><h3>{{ t('🤖 Automatic Backup Settings') }}</h3><div class="sub">{{ t('Automatic backup on a set schedule') }}</div></div>
@@ -1149,7 +1129,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- ═══ RESTORE MANAGEMENT ═══ -->
+          
           <div class="card" style="border-left:4px solid var(--amber,#f59e0b)">
             <div class="card-head">
               <div><h3>{{ t('♻️ Restore Management') }}</h3><div class="sub">{{ t('Restore the database from a backup — a safety backup is created first') }}</div></div>
@@ -1168,7 +1148,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- ═══ BACKUP ACTIVITY LOGS ═══ -->
+          
           <div class="card">
             <div class="card-head"><div><h3>{{ t('📝 Backup Activity Logs') }}</h3><div class="sub">{{ t('Action · Performed By · Date & Time · Status · Details') }}</div></div></div>
             <div class="table-wrap">
@@ -1189,7 +1169,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             </div>
           </div>
 
-          <!-- ═══ DANGER ZONE ═══ -->
+          
           <div class="card" style="border-left:4px solid var(--danger,#dc2626)">
             <div class="card-head">
               <div><h3 style="color:var(--danger)">☠️ {{ t('Danger Zone') }}</h3><div class="sub">{{ t('Super Administrator only — multiple confirmations required') }}</div></div>
@@ -1206,11 +1186,9 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
+  
 
-
-  <!-- ========================= MODALS ========================= -->
-
-  <!-- request detail (view full contents) -->
+  
   <div class="modal-mask" v-if="reqDetail.open" @click.self="reqDetail.open=false">
     <div class="modal" style="max-width:560px">
       <div class="modal-head">
@@ -1234,7 +1212,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
         </div>
 
-        <!-- NEW PRODUCT: full requested details -->
+        
         <table class="tbl" v-if="reqDetail.r.req_type==='new_product' && reqDetail.r.payload_data">
           <tbody>
             <tr><td style="width:38%">Name</td><td class="strong">{{ reqDetail.r.payload_data.name }}</td></tr>
@@ -1248,7 +1226,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </tbody>
         </table>
 
-        <!-- EDIT: old → new comparison -->
+        
         <table class="tbl" v-else-if="reqDetail.r.req_type==='edit_product'">
           <thead><tr><th>Field</th><th>Current</th><th>Requested</th></tr></thead>
           <tbody>
@@ -1261,7 +1239,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </tbody>
         </table>
 
-        <!-- STOCK-IN / PRICE CHANGE / DAMAGE -->
+        
         <table class="tbl" v-else>
           <tbody>
             <tr><td style="width:38%">Product</td><td class="strong">{{ reqDetail.r.product_name }}</td></tr>
@@ -1288,7 +1266,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- product add/edit -->
+  
   <div class="modal-mask" v-if="modals.product" @click.self="modals.product=false">
     <div class="modal wide">
       <div class="modal-head">
@@ -1368,7 +1346,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- stock adjustment request -->
+  
   <div class="modal-mask" v-if="modals.adjust" @click.self="modals.adjust=false">
     <div class="modal">
       <div class="modal-head">
@@ -1401,7 +1379,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- stock transfer request -->
+  
   <div class="modal-mask" v-if="modals.transfer" @click.self="modals.transfer=false">
     <div class="modal">
       <div class="modal-head">
@@ -1447,7 +1425,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- categories -->
+  
   <div class="modal-mask" v-if="modals.cats" @click.self="modals.cats=false">
     <div class="modal">
       <div class="modal-head"><h3>🗂 Categories</h3><button class="modal-close" @click="modals.cats=false">✕</button></div>
@@ -1484,7 +1462,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- new stock request -->
+  
   <div class="modal-mask" v-if="modals.request" @click.self="modals.request=false">
     <div class="modal">
       <div class="modal-head"><h3>📝 New stock request</h3><button class="modal-close" @click="modals.request=false">✕</button></div>
@@ -1527,7 +1505,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- user add/edit (super) -->
+  
   <div class="modal-mask" v-if="modals.user" @click.self="modals.user=false">
     <div class="modal">
       <div class="modal-head">
@@ -1560,7 +1538,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
     </div>
   </div>
 
-  <!-- reset password (super) -->
+  
   <div class="modal-mask" v-if="modals.resetPass" @click.self="modals.resetPass=false">
     <div class="modal">
       <div class="modal-head"><h3>🔑 Reset password — {{ users.resetTarget?.full_name }}</h3><button class="modal-close" @click="modals.resetPass=false">✕</button></div>
@@ -1576,7 +1554,6 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
       </div>
     </div>
   </div>
-
 
 </div>
 
@@ -1617,7 +1594,6 @@ const IS_SUPER = <?= $IS_SUPER ? 'true' : 'false' ?>;
 const ME = <?= json_encode($me) ?>;
 
 const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
-
 
 Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
 Chart.defaults.color = '#52636f';
