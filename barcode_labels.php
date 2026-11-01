@@ -5,26 +5,27 @@ require __DIR__ . '/db.php';
 $user = require_role('admin', 'super_admin');
 
 $pid = (int)($_GET['product_id'] ?? 0);
-$qty = max(1, min(96, (int)($_GET['qty'] ?? 12)));
 
-$st = db()->prepare('SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id = ?');
-$st->execute([$pid]);
-$p = $st->fetch();
-if (!$p) {
-    http_response_code(404);
-    die('<h3 style="font-family:sans-serif">Product not found.</h3>');
+if ($pid > 0) {
+    $st = db()->prepare('SELECT p.name, p.unit, p.selling_price, p.barcode, p.id FROM products p WHERE p.id = ?');
+    $st->execute([$pid]);
+    $products = $st->fetchAll();
+} else {
+    $products = db()->query(
+        'SELECT p.name, p.unit, p.selling_price, p.barcode, p.id FROM products p
+          WHERE p.status = "active" ORDER BY p.name'
+    )->fetchAll();
 }
-
-$code  = $p['barcode'] !== '' ? $p['barcode'] : ('MH-P' . str_pad((string)$p['id'], 6, '0', STR_PAD_LEFT));
-$price = '₱' . number_format((float)$p['selling_price'], 2);
-$name  = htmlspecialchars($p['name'], ENT_QUOTES, 'UTF-8');
-$unit  = htmlspecialchars($p['unit'], ENT_QUOTES, 'UTF-8');
+if (!$products) {
+    http_response_code(404);
+    die('<h3 style="font-family:sans-serif">No products found.</h3>');
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Barcode labels — <?= $name ?></title>
+<title>Barcode labels — <?= count($products) ?> product<?= count($products) === 1 ? '' : 's' ?></title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #eef2f0; padding: 18px; }
@@ -36,12 +37,11 @@ $unit  = htmlspecialchars($p['unit'], ENT_QUOTES, 'UTF-8');
   }
   .toolbar h3 { font-size: 15px; color: #14532d; margin-right: auto; }
   .toolbar .info { font-size: 13px; color: #52636f; }
-  .toolbar input, .toolbar button {
+  .toolbar button {
     font-family: inherit; font-size: 13.5px; padding: 9px 14px;
     border: 1.6px solid #cfe3d6; border-radius: 10px; background: #fff;
+    font-weight: 800; cursor: pointer;
   }
-  .toolbar input { width: 70px; text-align: center; font-weight: 700; }
-  .toolbar button { font-weight: 800; cursor: pointer; }
   .toolbar .print { background: #16a34a; border-color: #16a34a; color: #fff; }
   .toolbar .print:hover { background: #15803d; }
   .toolbar .close { color: #52636f; }
@@ -85,58 +85,50 @@ $unit  = htmlspecialchars($p['unit'], ENT_QUOTES, 'UTF-8');
 <body>
 
 <div class="toolbar">
-  <h3>🏷 Barcode labels — <?= $name ?></h3>
-  <span class="info">Scannable CODE128 · 50 × 30 mm labels</span>
-  <label class="hint">Labels:
-    <input id="qty" type="number" min="1" max="96" value="<?= $qty ?>">
-  </label>
-  <button class="print" onclick=" reprint()">🖨 Print</button>
+  <h3>🏷 Barcode labels — <?= count($products) ?> product<?= count($products) === 1 ? '' : 's' ?>, 1 label each</h3>
+  <span class="info">Scannable CODE128 · 50 × 30 mm</span>
+  <button class="print" onclick="printSheet()">🖨 Print</button>
   <button class="close" onclick="window.close()">✕ Close</button>
-  <span class="hint">Tip: change the count then Print. Same sheet works for a plain A4 — cut along the dashed lines.</span>
+  <span class="hint">Tip: works on plain A4 too — cut along the dashed lines.</span>
 </div>
 
 <div class="sheet" id="sheet">
-  <?php for ($i = 0; $i < $qty; $i++): ?>
+  <?php foreach ($products as $p): ?>
+  <?php
+      $code  = $p['barcode'] !== '' ? $p['barcode'] : ('MH-P' . str_pad((string)$p['id'], 6, '0', STR_PAD_LEFT));
+      $price = '₱' . number_format((float)$p['selling_price'], 2);
+      $name  = htmlspecialchars($p['name'], ENT_QUOTES, 'UTF-8');
+      $unit  = htmlspecialchars($p['unit'], ENT_QUOTES, 'UTF-8');
+      $codeH = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+  ?>
   <div class="label">
     <div class="l-name"><?= $name ?> (<?= $unit ?>)</div>
     <div class="l-price"><?= $price ?></div>
-    <div class="l-bar"><svg class="bc"></svg></div>
-    <div class="l-code"><?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="l-bar"><svg class="bc" data-code="<?= $codeH ?>"></svg></div>
+    <div class="l-code"><?= $codeH ?></div>
   </div>
-  <?php endfor; ?>
+  <?php endforeach; ?>
 </div>
 
 <script src="Assets/jsbarcode.all.min.js?v=1"></script>
 <script>
-  var CODE = <?= json_encode($code) ?>;
-
   function renderLabels() {
-    JsBarcode('.bc', CODE, {
-      format: 'CODE128',
-      width: 1.55,
-      height: 34,
-      displayValue: false,
-      margin: 1,
-      background: '#ffffff',
-      lineColor: '#000000'
+    document.querySelectorAll('.bc').forEach(function (el) {
+      JsBarcode(el, el.getAttribute('data-code'), {
+        format: 'CODE128',
+        width: 1.55,
+        height: 34,
+        displayValue: false,
+        margin: 1,
+        background: '#ffffff',
+        lineColor: '#000000'
+      });
     });
   }
-
-  function reprint() {
+  function printSheet() {
     renderLabels();
     setTimeout(function () { window.print(); }, 150);
   }
-
-  document.getElementById('qty').addEventListener('change', function () {
-    var n = Math.max(1, Math.min(96, parseInt(this.value || '12', 10)));
-    this.value = n;
-    var sheet = document.getElementById('sheet');
-    var labels = sheet.querySelectorAll('.label');
-        for (var i = labels.length; i < n; i++) sheet.appendChild(labels[0].cloneNode(true));
-    while (sheet.querySelectorAll('.label').length > n) sheet.removeChild(sheet.lastChild);
-    renderLabels();
-  });
-
   renderLabels();
 </script>
 </body>

@@ -361,6 +361,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           <div class="card-head">
             <div><h3>📦 Products <span class="badge b-green">{{ invProducts.length }} active</span></h3></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-outline" @click="printLabels()" title="Print barcode labels — one per product">🏷 {{ t('Barcode labels') }}</button>
               <button class="btn btn-outline" @click="loadInventory(); loadCats()" title="Reload stock from the database">⟳ Refresh</button>
               <button class="btn btn-outline" @click="openCategories">🗂️ Categories</button>
               <button class="btn btn-primary" @click="openProduct()">＋ Add product</button>
@@ -427,7 +428,6 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                     <button class="btn btn-outline btn-sm" @click="openTransfer(p)">⇄ Transfer</button>
                     <button class="btn btn-outline btn-sm" @click="openAdjust(p)">⇅ Adjust</button>
                     <button class="btn btn-outline btn-sm" @click="openProduct(p)">✏️ Edit</button>
-                    <button class="btn btn-outline btn-sm" @click="printLabels(p)" title="Print barcode labels">🏷</button>
                     <button class="btn btn-danger btn-sm" @click="archiveProduct(p)">🗑️</button>
                   </td>
                 </tr>
@@ -465,6 +465,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         <div class="page-head">
           <div><h2>🏬 Stocks &amp; Display</h2><div class="sub"></div></div>
           <div style="display:flex;gap:10px">
+            <button class="btn btn-outline" @click="printLabels()" title="Print barcode labels — one per product">🏷 {{ t('Barcode labels') }}</button>
             <button class="btn btn-outline" @click="loadInventory()" title="Reload from the database">⟳ Refresh</button>
           </div>
         </div>
@@ -553,7 +554,6 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                       <button class="btn btn-outline btn-sm" @click="openTransfer(p)">⇄ Transfer</button>
                       <button class="btn btn-outline btn-sm" @click="openAdjust(p)">⇅ Adjust</button>
                       <button class="btn btn-outline btn-sm" @click="openProduct(p)">✏️ Edit</button>
-                      <button class="btn btn-outline btn-sm" @click="printLabels(p)" title="Print barcode labels">🏷 {{ t('Labels') }}</button>
                     </div>
                   </td>
                 </tr>
@@ -1632,7 +1632,7 @@ const __app = createApp({
       '🔥 Fast moving': '🔥 Mabilis gumalaw', '🐢 Slow moving': '🐢 Mabagal gumalaw',
       '😴 No sales': '😴 Walang benta', 'days': 'araw',
       '📋 All': '📋 Lahat', 'All': 'Lahat', '😴 No sales — top': '😴 Walang benta — top',
-      'Labels': 'Mga Label', '🔫 Scan to transfer': '🔫 Scan para sa paglipat',
+      'Labels': 'Mga Label', 'Barcode labels': 'Mga Label ng Barcode', '🔫 Scan to transfer': '🔫 Scan para sa paglipat',
       'Scan box barcode, then press Enter…': 'I-scan ang barcode ng kahon, tapos pindutin ang Enter…',
       'Moves warehouse stock to display directly.': 'Direktang inililipat ang warehouse stock papunta sa display.',
       'Files a transfer request for super admin approval.': 'Nagfa-file ng transfer request para sa aprobrasyon ng super admin.',
@@ -2219,7 +2219,7 @@ const __app = createApp({
       openTransfer(p);
     }
     function printLabels(p) {
-      window.open('barcode_labels.php?product_id=' + p.id + '&qty=12', '_blank');
+      window.open('barcode_labels.php', '_blank');
     }
     const rcv = reactive({ scan: '', items: [], busy: false });
     async function rcvScanEnter() {
