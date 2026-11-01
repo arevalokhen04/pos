@@ -98,7 +98,6 @@ $vat         = $gross - $vatable;
   <div class="hr-solid"></div>
   <div class="row sec">
     <span class="l">SALES INVOICE</span>
-    <span class="r"><?= htmlspecialchars($sale['receipt_no']) ?></span>
   </div>
   <div class="row tiny">
     <span class="l">Date: <?= date('m/d/Y', strtotime($sale['created_at'])) ?> <?= date('g:i:s A', strtotime($sale['created_at'])) ?></span>
@@ -143,7 +142,7 @@ $vat         = $gross - $vatable;
   <?php if ($discount > 0): ?>
   <div class="row"><span class="l">Less: Discount</span><span class="r">-<?= number_format($discount, 2) ?></span></div>
   <?php endif; ?>
-  <div class="row big"><span class="l">TOTAL AMOUNT DUE</span><span class="r">P <?= number_format($total, 2) ?></span></div>
+  <div class="row big"><span class="l">TOTAL AMOUNT</span><span class="r">P <?= number_format($total, 2) ?></span></div>
 
   <div class="hr"></div>
 
