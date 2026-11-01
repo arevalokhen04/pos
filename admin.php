@@ -945,21 +945,6 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
 
         
-        <div class="modal-mask" v-if="rcptDetail.open" @click.self="rcptDetail.open=false">
-          <div class="modal" style="max-width:430px">
-            <div class="modal-head">
-              <h3>📄 Receipt {{ rcptDetail.receiptNo }}</h3>
-              <button class="modal-close" @click="rcptDetail.open=false">✕</button>
-            </div>
-            <div class="modal-body" style="background:var(--green-50);display:grid;place-items:center">
-              <iframe :src="rcptDetail.url" style="width:100%;height:520px;border:1.5px dashed var(--green-200);border-radius:12px;background:#fff" title="Receipt preview"></iframe>
-            </div>
-            <div class="modal-foot">
-              <button class="btn btn-outline" @click="rcptDetail.open=false">Close</button>
-              <button class="btn btn-primary" @click="printReceiptAdmin">🖨 Print</button>
-            </div>
-          </div>
-        </div>
       </template>
 
       
@@ -1189,6 +1174,23 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
   
 
   
+  <!-- receipt preview modal (works from any view) -->
+        <div class="modal-mask" v-if="rcptDetail.open" @click.self="rcptDetail.open=false">
+          <div class="modal" style="max-width:430px">
+            <div class="modal-head">
+              <h3>📄 Receipt {{ rcptDetail.receiptNo }}</h3>
+              <button class="modal-close" @click="rcptDetail.open=false">✕</button>
+            </div>
+            <div class="modal-body" style="background:var(--green-50);display:grid;place-items:center">
+              <iframe :src="rcptDetail.url" style="width:100%;height:520px;border:1.5px dashed var(--green-200);border-radius:12px;background:#fff" title="Receipt preview"></iframe>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-outline" @click="rcptDetail.open=false">Close</button>
+              <button class="btn btn-primary" @click="printReceiptAdmin">🖨 Print</button>
+            </div>
+          </div>
+        </div>
+
   <div class="modal-mask" v-if="reqDetail.open" @click.self="reqDetail.open=false">
     <div class="modal" style="max-width:560px">
       <div class="modal-head">
