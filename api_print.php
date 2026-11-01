@@ -105,7 +105,6 @@ $vat         = $gross - $vatable;
   </div>
   <div class="row tiny">
     <span class="l">Cashier: <?= htmlspecialchars($sale['cashier_name']) ?></span>
-    <span class="r">Terms: CASH</span>
   </div>
 
   <div class="hr"></div>
