@@ -97,7 +97,12 @@ switch ($action) {
             json_out(['success' => false, 'message' => 'Invalid username or password.']);
         }
         if ($user['status'] !== 'active') {
-            json_out(['success' => false, 'message' => 'Your account is deactivated. Contact the administrator.']);
+            /* never logged in = still awaiting activation; otherwise it was deactivated by the Super Admin */
+            $msg = ($user['last_login'] === null)
+                ? 'You cannot log in yet — your account is not activated. Please wait for the Super Admin to activate it.'
+                : 'Your account has been deactivated. Contact the administrator.';
+            audit_log($user, 'login_blocked', 'user', (int)$user['id'], 'Blocked login (status: ' . $user['status'] . ')');
+            json_out(['success' => false, 'message' => $msg]);
         }
 
         login_record_attempt($mhIp, $username, true);
