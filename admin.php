@@ -36,6 +36,12 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
+<div id="boot-loader" style="position:fixed;inset:0;background:#f4f7f5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9999;font-family:'Segoe UI',system-ui,sans-serif">
+  <div style="font-size:44px;animation:mhspin 1.1s linear infinite;display:inline-block">🔧</div>
+  <div style="font-weight:800;color:#14532d;font-size:15px;letter-spacing:.5px">MARINA'S HARDWARE</div>
+  <div style="font-size:12.5px;color:#7a8a80">Loading the system…</div>
+</div>
+<style>@keyframes mhspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
 <div id="app" v-cloak>
 
   
@@ -2697,6 +2703,8 @@ const __app = createApp({
 
     
     onMounted(() => {
+      const bootLoader = document.getElementById('boot-loader');
+      if (bootLoader) bootLoader.remove();
       
       
       const savedView = sessionStorage.getItem('mh_admin_view');
