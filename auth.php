@@ -143,10 +143,16 @@ switch ($action) {
         $username = trim($input['username'] ?? '');
         $fullName = trim($input['full_name'] ?? '');
         $password = $input['password'] ?? '';
-        $role     = in_array($input['role'] ?? '', ['admin', 'cashier'], true) ? $input['role'] : 'cashier';
+        $role     = 'cashier';   /* registration is cashier-only; any posted role is ignored */
 
-        if ($username === '' || $fullName === '' || strlen($password) < 6) {
-            json_out(['success' => false, 'message' => 'Fill up all fields. Password must be at least 6 characters.']);
+        if ($username === '' || $fullName === '') {
+            json_out(['success' => false, 'message' => 'Fill up all fields.']);
+        }
+        if (!preg_match('/^[A-Za-z0-9]+$/', $username)) {
+            json_out(['success' => false, 'message' => 'Username can only contain letters and numbers.']);
+        }
+        if (strlen($password) < 8 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+            json_out(['success' => false, 'message' => 'Password must be at least 8 characters and contain both letters and numbers.']);
         }
 
         $st = db()->prepare('SELECT id FROM users WHERE username = ?');

@@ -18,7 +18,7 @@ if ($LOGGED) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login — Marina's Hardware POS</title>
 <link rel="stylesheet" href="Assets/sweetalert2.min.css?v=2">
-<link rel="stylesheet" href="Assets/login.css?v=2">
+<link rel="stylesheet" href="Assets/login.css?v=3">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -113,24 +113,25 @@ if ($LOGGED) {
               <label>Username</label>
               <div class="input-wrap">
                 <span class="ico">👤</span>
-                <input v-model.trim="reg.username" placeholder="juandc" required>
+                <input :value="reg.username"
+                       @input="reg.username = $event.target.value.replace(/[^A-Za-z0-9]/g, '')"
+                       placeholder="juandc" required>
+                <div class="hint" style="font-size:11px;color:#7a8a80;margin-top:4px">Letters and numbers only — no special characters.</div>
               </div>
             </div>
             <div class="field">
-              <label>Role</label>
-              <select v-model="reg.role">
-                <option value="cashier">Cashier</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Password (min 6 characters)</label>
+              <label>Password</label>
               <div class="input-wrap">
                 <span class="ico">🔒</span>
                 <input type="password" v-model="reg.password" placeholder="••••••••" required>
               </div>
+              <div class="pw-rules">
+                <div :class="{ ok: pwChecks.len }">✓ At least 8 characters</div>
+                <div :class="{ ok: pwChecks.letter }">✓ Contains at least one letter</div>
+                <div :class="{ ok: pwChecks.num }">✓ Contains at least one number</div>
+              </div>
             </div>
-            <button class="btn-green" :disabled="loading">
+            <button class="btn-green" :disabled="loading || !pwValid">
               {{ loading ? 'Submitting…' : 'Register' }}
             </button>
           </form>
@@ -151,7 +152,7 @@ const SIGNED_IN = <?= $LOGGED ? json_encode([
     'initials'  => strtoupper(mb_substr($LOGGED['full_name'], 0, 1)),
 ]) : 'null' ?>;
 
-const { createApp, ref, reactive } = Vue;
+const { createApp, ref, reactive, computed } = Vue;
 
 createApp({
   setup() {
@@ -161,7 +162,13 @@ createApp({
     const error = ref('');
     const showPass = ref(false);
     const form = reactive({ username: '', password: '' });
-    const reg = reactive({ full_name: '', username: '', role: 'cashier', password: '' });
+    const reg = reactive({ full_name: '', username: '', password: '' });
+    const pwChecks = computed(() => ({
+      len: reg.password.length >= 8,
+      letter: /[A-Za-z]/.test(reg.password),
+      num: /[0-9]/.test(reg.password),
+    }));
+    const pwValid = computed(() => pwChecks.value.len && pwChecks.value.letter && pwChecks.value.num);
 
     async function api(action, body) {
       const res = await fetch('auth.php?action=' + action, {
@@ -192,6 +199,14 @@ createApp({
 
     async function register() {
       error.value = '';
+      if (!pwValid.value) {
+        error.value = 'Password must be at least 8 characters and contain both letters and numbers.';
+        return;
+      }
+      if (!/^[A-Za-z0-9]+$/.test(reg.username)) {
+        error.value = 'Username can only contain letters and numbers.';
+        return;
+      }
       loading.value = true;
       try {
         const r = await api('register', reg);
@@ -214,7 +229,7 @@ createApp({
       Swal.fire({ icon: 'success', title: 'Signed out', text: 'You can now sign in with another account.', timer: 1400, showConfirmButton: false });
     }
 
-    return { signedIn, signOutSwitch, tab, loading, error, showPass, form, reg, login, register };
+    return { signedIn, signOutSwitch, tab, loading, error, showPass, form, reg, pwChecks, pwValid, login, register };
   },
 }).mount('#app');
 </script>

@@ -236,3 +236,8 @@ body {
   .login-wrap { grid-template-columns: 1fr; }
   .brand-side { display: none; }
 }
+
+/* password requirement checklist */
+.pw-rules { margin-top: 6px; display: grid; gap: 2px; }
+.pw-rules div { font-size: 11px; color: #94a3b8; transition: color .15s; }
+.pw-rules div.ok { color: #15803d; font-weight: 700; }
