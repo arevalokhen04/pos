@@ -20,7 +20,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cashier POS — Marina's Hardware</title>
 <link rel="stylesheet" href="Assets/sweetalert2.min.css?v=2">
-<link rel="stylesheet" href="Assets/cashier.css?v=10">
+<link rel="stylesheet" href="Assets/cashier.css?v=11">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -137,7 +137,13 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         </div>
 
         <div class="prod-grid">
-          <div class="bm-empty" style="grid-column:1/-1" v-if="loading"><div class="big">⏳</div>{{ t('Loading products…') }}</div>
+          <template v-if="loading">
+            <div class="skel-card" v-for="i in 10" :key="'skc'+i" style="grid-column:auto">
+              <div class="skel" style="width:52px;height:52px;border-radius:12px"></div>
+              <div class="skel" style="height:12px;width:78%"></div>
+              <div class="skel" style="height:11px;width:52%"></div>
+            </div>
+          </template>
           <div class="bm-empty" style="grid-column:1/-1" v-else-if="!filtered.length">
             <div class="big">🔎</div>{{ t('No matching product.') }}
           </div>
@@ -146,7 +152,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
                @click="addToCart(p)">
             <span class="lowflag" v-if="avail(p) <= p.reorder_level">LOW</span>
             <div class="prod-ico">
-              <img v-if="p.image" :src="p.image" style="width:34px;height:34px;object-fit:cover;border-radius:8px;display:block">
+              <img v-if="p.image" :src="p.image" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:8px;display:block">
               <template v-else>{{ catIcon(p.category_name) }}</template>
             </div>
             <div class="prod-name">{{ p.name }}</div>

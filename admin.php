@@ -32,7 +32,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= $pageTitle ?> — Marina's Hardware POS</title>
 <link rel="stylesheet" href="Assets/sweetalert2.min.css?v=2">
-<link rel="stylesheet" href="Assets/<?= $IS_SUPER ? 'super_admin.css' : 'admin.css' ?>?v=5">
+<link rel="stylesheet" href="Assets/<?= $IS_SUPER ? 'super_admin.css' : 'admin.css' ?>?v=6">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -407,12 +407,23 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="inv.loading"><td colspan="8" class="loading-row">Loading products…</td></tr>
+                <tr v-if="inv.loading"><td colspan="8" style="padding:10px 14px">
+                  <div class="skel-row" v-for="i in 6" :key="'skl'+i">
+                    <div class="skel" style="width:34px;height:34px;border-radius:8px;flex-shrink:0"></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="skel" style="height:12px;width:42%;margin-bottom:5px"></div>
+                      <div class="skel" style="height:10px;width:26%"></div>
+                    </div>
+                    <div class="skel" style="width:64px;height:12px"></div>
+                    <div class="skel" style="width:64px;height:12px"></div>
+                    <div class="skel" style="width:80px;height:12px"></div>
+                  </div>
+                </td></tr>
                 <tr v-else-if="!invProducts.length"><td colspan="8"><div class="empty-state"><div class="big">🖥️</div><div class="t">No products on display</div><div class="d">{{ t('Products on display appear here — use the "+" button to add products.') }}</div></div></td></tr>
                 <tr v-for="p in invProducts" :key="p.id">
                   <td>
                     <div style="display:flex;align-items:center;gap:10px">
-                      <img v-if="p.image" :src="p.image" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex-shrink:0">
+                      <img v-if="p.image" :src="p.image" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex-shrink:0">
                       <span v-else style="font-size:22px">{{ catIcon(p.category_name) }}</span>
                       <div>
                         <div class="strong">{{ p.name }}</div>
@@ -537,12 +548,22 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
             <table class="tbl">
               <thead><tr><th>{{ t('Product') }}</th><th>Category</th><th class="num">📦 Stocks (warehouse)</th><th class="num">🖥️ Display</th><th style="text-align:center">Actions</th></tr></thead>
               <tbody>
-                <tr v-if="inv.loading"><td colspan="5" class="loading-row">Loading…</td></tr>
+                <tr v-if="inv.loading"><td colspan="5" style="padding:10px 14px">
+                  <div class="skel-row" v-for="i in 6" :key="'sks'+i">
+                    <div class="skel" style="width:34px;height:34px;border-radius:8px;flex-shrink:0"></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="skel" style="height:12px;width:45%;margin-bottom:5px"></div>
+                      <div class="skel" style="height:10px;width:28%"></div>
+                    </div>
+                    <div class="skel" style="width:64px;height:12px"></div>
+                    <div class="skel" style="width:64px;height:12px"></div>
+                  </div>
+                </td></tr>
                 <tr v-else-if="!invProducts.length"><td colspan="5"><div class="empty-state"><div class="big">🏬</div><div class="t">No products found</div></div></td></tr>
                 <tr v-for="p in invProducts" :key="'sd'+p.id">
                   <td>
                     <div style="display:flex;align-items:center;gap:10px">
-                      <img v-if="p.image" :src="p.image" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex-shrink:0">
+                      <img v-if="p.image" :src="p.image" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:8px;flex-shrink:0">
                       <span v-else style="font-size:22px">{{ catIcon(p.category_name) }}</span>
                       <div>
                         <div class="strong">{{ p.name }}</div>
