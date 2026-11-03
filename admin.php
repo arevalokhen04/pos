@@ -428,7 +428,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                     <button class="btn btn-outline btn-sm" @click="openTransfer(p)">⇄ Transfer</button>
                     <button class="btn btn-outline btn-sm" @click="openAdjust(p)">⇅ Adjust</button>
                     <button class="btn btn-outline btn-sm" @click="openProduct(p)">✏️ Edit</button>
-                    <button class="btn btn-danger btn-sm" @click="archiveProduct(p)">🗑️</button>
+                    <button class="btn btn-danger btn-sm" @click="archiveProduct(p)">{{ t('Delete') }}</button>
                   </td>
                 </tr>
               </tbody>
@@ -2071,7 +2071,7 @@ const __app = createApp({
       } else toast('error', r.message);
     }
     async function archiveProduct(p) {
-      const c = await Swal.fire({ icon: 'warning', title: 'Archive ' + p.name + '?', text: 'It will be hidden from inventory and POS but sales history stays.', showCancelButton: true, confirmButtonColor: '#16a34a', confirmButtonText: 'Yes, archive' });
+      const c = await Swal.fire({ icon: 'warning', title: 'Delete ' + p.name + '?', text: 'It will be removed from inventory and POS but sales history stays.', showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, delete' });
       if (!c.isConfirmed) return;
       const r = await api('api_inventory_v2.php?action=delete_product', { id: p.id });
       if (r.success) { toast('success', r.message); loadInventory(); loadCats(); loadCounts(); loadDashboard(); }
@@ -2700,15 +2700,16 @@ const __app = createApp({
       
       
       const savedView = sessionStorage.getItem('mh_admin_view');
-      const validForRole = isSuper
-        ? ['dashboard', 'inventory', 'approvals', 'reports', 'audit', 'users', 'backup']
-        : ['dashboard', 'inventory', 'stocksdisplay', 'requests', 'reports', 'audit'];
-      if (savedView && validForRole.includes(savedView)) {
+      const validForRole = ['dashboard', 'inventory', 'stocksdisplay', 'requests', 'reports', 'audit'];
+      if (isSuper) {
+        /* Super Admin always lands on the Dashboard */
+        sessionStorage.setItem('mh_admin_view', 'dashboard');
+        go('dashboard');
+      } else if (savedView && validForRole.includes(savedView)) {
         go(savedView);
       } else {
-        
-        sessionStorage.setItem('mh_admin_view', isSuper ? 'inventory' : 'dashboard');
-        go(isSuper ? 'inventory' : 'dashboard');
+        sessionStorage.setItem('mh_admin_view', 'dashboard');
+        go('dashboard');
       }
       loadCats();
       loadUnread();
