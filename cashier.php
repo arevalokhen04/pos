@@ -20,7 +20,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cashier POS — Marina's Hardware</title>
 <link rel="stylesheet" href="Assets/sweetalert2.min.css?v=2">
-<link rel="stylesheet" href="Assets/cashier.css?v=9">
+<link rel="stylesheet" href="Assets/cashier.css?v=10">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -182,7 +182,10 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
           </div>
           <div class="cart-row" v-for="(it,i) in cart" :key="it.id">
             <button class="rm" @click="voidItem(i)" :title="t('Void')" :aria-label="t('Void')">{{ t('Void') }}</button>
-            <div class="c-name">{{ it.name }}</div>
+            <div class="c-name">
+              <div class="c-n1">{{ it.name }}</div>
+              <div class="c-n2">{{ fmtP(it.price) }} / {{ it.unit }}</div>
+            </div>
             <div class="c-amt">{{ fmtP(it.price * it.qty) }}</div>
             <div class="qty-ctl">
               <button @click="qty(i,-1)">−</button>

@@ -2385,7 +2385,13 @@ const __app = createApp({
         title: word + ' request #' + r.id + '?',
         html,
         input: 'textarea',
-        inputPlaceholder: 'Optional note for ' + r.requested_by_name + '…',
+        inputPlaceholder: decision === 'rejected'
+          ? 'Required: reason for rejection…'
+          : 'Optional note for ' + r.requested_by_name + '…',
+        inputValidator: (v) => {
+          if (decision === 'rejected' && !(v || '').trim()) return 'A reason is required when rejecting a request.';
+          return null;
+        },
         showCancelButton: true,
         confirmButtonColor: decision === 'approved' ? '#16a34a' : '#dc2626',
         confirmButtonText: word,

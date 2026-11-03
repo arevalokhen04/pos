@@ -303,7 +303,8 @@ body {
   padding: 10px 8px;
   border-bottom: 1px solid var(--line);
 }
-.cart-row .c-name { font-weight: 700; font-size: 13px; line-height: 1.3; }
+.cart-row .c-name { font-weight: 700; font-size: 13px; line-height: 1.3; min-width: 0; }
+.cart-row .c-n2 { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); margin-top: 1px; }
 .cart-row .c-amt {
   color: var(--green-700); font-weight: 800; font-size: 13px;
   text-align: right;

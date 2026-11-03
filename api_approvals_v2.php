@@ -288,6 +288,9 @@ switch ($action) {
         $id     = (int)($input['id'] ?? 0);
         $decision = ($input['decision'] ?? '') === 'approved' ? 'approved' : 'rejected';
         $note   = trim($input['note'] ?? '');
+        if ($decision === 'rejected' && $note === '') {
+            json_out(['success' => false, 'message' => 'A reason for rejection is required.']);
+        }
 
         $st = db()->prepare(
             'SELECT sr.*, p.name AS product_name, p.stock_qty, p.display_qty, p.selling_price, p.cost_price
