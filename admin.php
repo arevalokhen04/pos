@@ -958,10 +958,10 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                 <tbody>
                   <tr v-if="!rep.data?.recent?.length"><td colspan="6" class="loading-row">No sales in this period.</td></tr>
                   <tr v-for="s in rep.data?.recent" :key="s.receipt_no">
-                    <td class="strong">{{ s.receipt_no }}</td>
+                    <td class="strong">{{ s.receipt_no }} <span v-if="s.status==='voided'" class="badge b-red" style="margin-left:6px">VOID</span></td>
                     <td class="muted" style="white-space:nowrap">{{ fmtDT(s.created_at) }}</td>
                     <td>{{ s.cashier }}</td>
-                    <td><span class="badge b-green">{{ s.payment_method }}</span></td>
+                    <td><span class="badge" :class="s.status==='voided' ? 'b-red' : 'b-green'">{{ s.payment_method }}</span></td>
                     <td class="num strong">{{ fmtP(s.total_amount) }}</td>
                     <td style="text-align:center"><button class="btn btn-outline btn-sm" @click="viewReceiptAdmin(s)">👁 View</button></td>
                   </tr>

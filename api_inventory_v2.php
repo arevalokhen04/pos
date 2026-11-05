@@ -288,7 +288,7 @@ switch ($action) {
         $mv->execute([$id, $user['id'], $qty, $notes ?: 'Manual adjustment']);
         audit_log($user, 'stock_adjust', 'product', $id, 'Adjusted ' . $p['name'] . ' by ' . $qty . ' (' . $notes . ')');
         check_low_stock($id);
-        json_out(['success' => true, 'message' => ucfirst($target === 'display_qty' ? 'display' : 'warehouse') . ' stock adjusted to ' . $newQty . '.']);
+        json_out(['success' => true, 'message' => 'Warehouse stock adjusted to ' . $newQty . '.']);
 
     case 'transfer_stock':
         

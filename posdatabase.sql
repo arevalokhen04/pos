@@ -83,10 +83,17 @@ CREATE TABLE sales (
   discount      DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   amount_paid   DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   change_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-  payment_method ENUM('cash','gcash') NOT NULL DEFAULT 'cash',
+  payment_method ENUM('cash') NOT NULL DEFAULT 'cash',
   total_cost    DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  status        ENUM('completed','voided') NOT NULL DEFAULT 'completed',
+  idempotency_key VARCHAR(64) DEFAULT NULL,
+  voided_by     INT DEFAULT NULL,
+  voided_at     DATETIME DEFAULT NULL,
+  void_reason   VARCHAR(255) DEFAULT NULL,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_sale_cashier FOREIGN KEY (cashier_id) REFERENCES users(id)
+  CONSTRAINT fk_sale_cashier FOREIGN KEY (cashier_id) REFERENCES users(id),
+  CONSTRAINT fk_sale_voider  FOREIGN KEY (voided_by)  REFERENCES users(id),
+  UNIQUE KEY uq_sales_idem (idempotency_key)
 ) ENGINE=InnoDB;
 
 CREATE TABLE sale_items (
@@ -112,7 +119,7 @@ CREATE TABLE inventory_movements (
   id         INT AUTO_INCREMENT PRIMARY KEY,
   product_id INT NOT NULL,
   user_id    INT DEFAULT NULL,
-  type       ENUM('stock_in','sale','adjustment') NOT NULL,
+  type       ENUM('stock_in','sale','adjustment','void_return') NOT NULL,
   qty        INT NOT NULL,
   notes      VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

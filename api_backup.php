@@ -2,7 +2,14 @@
 
 require __DIR__ . '/db.php';
 
-$user = require_role('super_admin');
+/* Scheduled-task entry point: Task Scheduler / cron may call
+   api_backup.php?action=auto_check&token=<BACKUP_CRON_TOKEN> without a
+   login session, so automatic backups run even when nobody uses the app. */
+if (($_GET['action'] ?? '') === 'auto_check' && hash_equals(BACKUP_CRON_TOKEN, (string)($_GET['token'] ?? ''))) {
+    $user = ['id' => null, 'full_name' => 'system (scheduled task)'];
+} else {
+    $user = require_role('super_admin');
+}
 $dir  = __DIR__ . '/backups';
 if (!is_dir($dir)) mkdir($dir, 0775, true);
 $settingsFile = $dir . '/auto_settings.json';

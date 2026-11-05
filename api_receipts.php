@@ -14,7 +14,7 @@ $st = $pdo->prepare('SELECT id FROM cashier_sessions WHERE user_id = ? AND statu
 $st->execute([$user['id']]);
 $session = $st->fetch();
 
-$cols = 's.id, s.receipt_no, s.created_at, s.total_amount, s.payment_method, s.discount,
+$cols = 's.id, s.receipt_no, s.created_at, s.total_amount, s.payment_method, s.discount, s.status,
          (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS items';
 
 if ($session) {
@@ -22,7 +22,7 @@ if ($session) {
     $st->execute([$session['id']]);
     $scope = 'shift';
 } else {
-    
+    /* no open shift: fall back to everything this user made today */
     $st = $pdo->prepare("SELECT $cols FROM sales s WHERE s.cashier_id = ? AND s.created_at >= CURDATE() ORDER BY s.id DESC LIMIT 200");
     $st->execute([$user['id']]);
     $scope = 'today';
@@ -31,8 +31,11 @@ if ($session) {
 $sales = $st->fetchAll();
 $total = 0.0;
 foreach ($sales as $s) {
-    $total += (float)$s['total_amount'];
     $s['items'] = (int)$s['items'];
+    /* voided sales stay visible in history (with a badge) but don't count toward cash totals */
+    if (($s['status'] ?? 'completed') === 'completed') {
+        $total += (float)$s['total_amount'];
+    }
 }
 
 json_out([

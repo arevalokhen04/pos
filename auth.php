@@ -190,8 +190,10 @@ switch ($action) {
         $old = $input['old_password'] ?? '';
         $new = $input['new_password'] ?? '';
 
-        if (strlen($new) < 6) {
-            json_out(['success' => false, 'message' => 'New password must be at least 6 characters.']);
+        /* uniform policy (r4): 8+ chars, letters and numbers — same rule as register */
+        $pwErr = validate_password($new);
+        if ($pwErr !== null) {
+            json_out(['success' => false, 'message' => $pwErr]);
         }
         $st = db()->prepare('SELECT password_hash FROM users WHERE id = ?');
         $st->execute([$user['id']]);

@@ -44,7 +44,8 @@ switch ($action) {
             json_out(['success' => false, 'message' => 'No open session to clock out.']);
         }
         
-        $ss = db()->prepare('SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE session_id = ?');
+        /* ending cash counts completed sales only — voided sales are reversals */
+        $ss = db()->prepare('SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE session_id = ? AND status = "completed"');
         $ss->execute([(int)$sess['id']]);
         $endingCash = round((float)$sess['starting_cash'] + (float)$ss->fetchColumn(), 2);
         $st = db()->prepare(

@@ -325,14 +325,23 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
           <thead><tr><th>{{ t('Receipt') }}</th><th>{{ t('Time') }}</th><th class="num">{{ t('Items') }}</th><th>{{ t('Pay') }}</th><th class="num">{{ t('Total') }}</th><th></th></tr></thead>
           <tbody>
             <tr v-for="s in hist.list" :key="s.id">
-              <td class="strong">{{ s.receipt_no }}</td>
+              <td class="strong">
+                {{ s.receipt_no }}
+                <span v-if="s.status==='voided'" class="badge b-red" style="margin-left:6px">VOID</span>
+              </td>
               <td class="muted">{{ fmtT(s.created_at) }}</td>
               <td class="num">{{ s.items }}</td>
               <td><span class="badge" :class="s.payment_method==='cash' ? 'b-green' : 'b-amber'">{{ s.payment_method }}</span></td>
               <td class="num strong">{{ fmtP(s.total_amount) }}</td>
               <td style="white-space:nowrap">
-                <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
-                <button class="btn btn-outline btn-sm" @click="reprint(s.id)">🖨 {{ t('Reprint') }}</button>
+                <template v-if="s.status !== 'voided'">
+                  <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
+                  <button class="btn btn-outline btn-sm" @click="reprint(s.id)">🖨 {{ t('Reprint') }}</button>
+                  <button v-if="me.role === 'super_admin'" class="btn btn-outline btn-sm" @click="voidSale(s)">⛔ {{ t('Void') }}</button>
+                </template>
+                <template v-else>
+                  <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
+                </template>
               </td>
             </tr>
           </tbody>
@@ -400,6 +409,8 @@ createApp({
       'Void': 'I-void', 'Void item': 'I-void ang item', 'Clear all items': 'Burahin lahat ng items',
       '💰 Checkout': '💰 Bayad', 'Items': 'Mga item', 'Discount': 'Diskwento',
       'Payment method': 'Paraan ng bayad', '💵 Cash': '💵 Cash', 'Amount received (₱)': 'Halagang binayad (₱)',
+      'Discount above 10% — supervisor password': 'Diskwentong lagpas 10% — password ng supervisor',
+      'Authorize void': 'Awtorisasyon ng void', 'Void sale': 'I-void ang benta', 'Reason (required)': 'Dahilan (kailangan)',
       'Exact': 'Eksakto', 'Round ↑': 'Round ↑', 'Change': 'Sukli', 'Back': 'Bumalik',
       'Processing…': 'Pinoproseso…', '✔ Complete sale': '✔ Tapusin ang benta',
       'Sale completed!': 'Tapos na ang benta!', 'Receipt': 'Resibo', 'Paid': 'Bayad',
@@ -581,16 +592,16 @@ createApp({
         confirmButtonColor: '#16a34a',
         reverseButtons: true,
       });
-      if (!res.isConfirmed) return false;
+      if (!res.isConfirmed) return null;
       const r = await api('api_session.php?action=void_auth', { password: res.value || '' });
-      if (r.success) return true;
+      if (r.success) return res.value || '';
       toast('error', r.message || 'Wrong password');
-      return false;
+      return null;
     }
     function voidItem(i) {
       const it = cart.value[i];
-      askVoidPassword(t('Void item')).then(ok => {
-        if (!ok) return;
+      askVoidPassword(t('Void item')).then(pw => {
+        if (pw === null) return;
         cart.value.splice(i, 1);
         persistCart();
         /* audit trail — makikita sa History Logs ng admin */
@@ -600,14 +611,18 @@ createApp({
     }
     function clearCart() {
       if (!cart.value.length) return;
-      askVoidPassword(t('Clear all items')).then(ok => {
-        if (!ok) return;
+      askVoidPassword(t('Clear all items')).then(pw => {
+        if (pw === null) return;
+        /* audit trail with the actual cancelled cart contents (r4: cancelled transactions) */
+        const details = 'Cart cleared by ' + me.full_name + ': ' + cart.value
+          .map(i => i.qty + 'x ' + i.name + ' (' + fmtP(i.price * i.qty) + ')').join(', ')
+          + (discount.value ? ' — discount ' + fmtP(discount.value) : '');
         const n = cart.value.length;
         cart.value = [];
         discount.value = 0;
         persistCart();
-        api('api_session.php?action=void_log', { kind: 'clear', items: 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ') by ' + me.full_name });
-        toast('success', 'Cart cleared.');
+        api('api_session.php?action=void_log', { kind: 'clear', items: details });
+        toast('success', 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ').');
       });
     }
     
@@ -645,24 +660,40 @@ createApp({
 
     
     function openCheckout() {
-      tendered.value = 0;                 
+      tendered.value = 0;
       payMethod.value = 'cash';
+      payRef.value = newPayRef();   /* one idempotency key per checkout attempt (r4) */
       payModal.value = true;
       setTimeout(() => tenderInput.value?.focus(), 120);
     }
     const change = computed(() => (tendered.value || 0) - total.value);
 
+    function newPayRef() {
+      return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'k' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+    const payRef = ref('');
+
     async function checkout() {
       if (!session.open) return toast('warning', 'Please clock in first');
+      if (paying.value) return;
+      /* discounts above 10% need the supervisor password (server re-validates) */
+      let discAuth = '';
+      if ((discount.value || 0) > 0 && discount.value > subtotal.value * 0.10) {
+        discAuth = await askVoidPassword(t('Discount above 10% — supervisor password'));
+        if (discAuth === null) return;
+      }
       paying.value = true;
       const r = await api('api_checkout.php', {
         items: cart.value.map(i => ({ product_id: i.id, qty: i.qty })),
         amount_paid: payMethod.value === 'gcash' ? total.value : tendered.value,
         discount: discount.value || 0,
         payment_method: payMethod.value,
+        idempotency_key: payRef.value,
+        discount_auth: discAuth,
       });
       paying.value = false;
       if (r.success) {
+        payRef.value = newPayRef();  /* fresh key for the next sale */
         lastSale.value = r.sale;
         payModal.value = false;
         cart.value = [];
@@ -670,10 +701,37 @@ createApp({
         persistCart();
         loadProducts();
         loadUnread();
-        if (hist.open) loadHistory(); 
+        if (hist.open) loadHistory();
+        if (r.duplicate) toast('info', 'This checkout was already completed — showing the original receipt.');
       } else {
         toast('error', r.message);
-        loadProducts(); 
+        loadProducts();
+      }
+    }
+
+    /* post-sale void — super admin only, password + reason, stock restored (r4) */
+    async function voidSale(s) {
+      const r1 = await Swal.fire({
+        title: '⛔ ' + t('Void sale') + ' ' + s.receipt_no + '?',
+        html: '<div style="font-size:12.5px;color:#52636f">Stock will be returned and the sale will be excluded from all reports.</div>',
+        input: 'text',
+        inputPlaceholder: t('Reason (required)'),
+        showCancelButton: true,
+        confirmButtonText: 'Next',
+        confirmButtonColor: '#dc2626',
+        reverseButtons: true,
+      });
+      if (!r1.isConfirmed) return;
+      if (!r1.value || !String(r1.value).trim()) return toast('warning', 'A reason is required to void a sale');
+      const pw = await askVoidPassword(t('Authorize void'));
+      if (pw === null) return;
+      const r = await api('api_void_sale.php', { sale_id: s.id, password: pw, reason: String(r1.value).trim() });
+      if (r.success) {
+        toast('success', r.message);
+        loadHistory();
+        loadProducts();
+      } else {
+        toast('error', r.message);
       }
     }
     function printReceipt() {
@@ -791,13 +849,25 @@ createApp({
       setInterval(loadProducts, 60000);
       document.addEventListener('click', () => { bellOpen.value = false; userOpen.value = false; });
       scanInput.value?.focus();
+
+      /* idle auto-logout (r4: session policy) — the server enforces 30 min;
+         the UI logs out proactively at 28 min of no input */
+      let lastActive = Date.now();
+      ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev =>
+        document.addEventListener(ev, () => { lastActive = Date.now(); }, { passive: true })
+      );
+      setInterval(() => {
+        if (Date.now() - lastActive > 28 * 60 * 1000) {
+          logout();
+        }
+      }, 30000);
     });
 
     return {
       lang, saveLang, t, langOpen, pickLang,
       me, loading, products, cats, cat, search, scanInput, filtered, catIcon, loadProducts, avail,
       cart, cartCount, subtotal, total, discount, addToCart, qty, setQty, voidItem, clearCart, scanEnter, cartOpen,
-      payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout,
+      payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout, voidSale,
       exactCash, quickBills,
       lastSale, printReceipt, newSale,
       session, clockModal, startingCash, clockIn, clockOut,

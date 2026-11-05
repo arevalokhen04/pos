@@ -553,6 +553,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 }
 .b-green { background: var(--green-100); color: var(--green-800); }
 .b-amber { background: #fffbeb; color: #b45309; }
+.b-red   { background: #fef2f2; color: #b91c1c; }
 
 
 .receipt-frame {

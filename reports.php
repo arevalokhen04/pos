@@ -52,6 +52,9 @@ switch ($period) {
         break;
 }
 
+/* voided sales are excluded from every report figure (r4: void is a full reversal) */
+$Voided = " AND s.status = 'completed'";
+
 if ($action === 'export') {
     $st = db()->prepare(
         'SELECT s.id, s.receipt_no, s.created_at, u.full_name AS cashier, s.total_amount, s.discount,
@@ -59,7 +62,7 @@ if ($action === 'export') {
                 (SELECT GROUP_CONCAT(CONCAT(si.qty, "x ", si.product_name) SEPARATOR "; ")
                    FROM sale_items si WHERE si.sale_id = s.id) AS items
            FROM sales s JOIN users u ON u.id = s.cashier_id
-          WHERE s.created_at BETWEEN ? AND ?
+          WHERE s.created_at BETWEEN ? AND ?' . $Voided . '
           ORDER BY s.created_at DESC'
     );
     $st->execute([$from, $to]);
@@ -102,9 +105,9 @@ $st = $pdo->prepare(
             COALESCE(SUM(total_cost), 0)   AS cost,
             COALESCE(SUM(discount), 0)     AS discounts,
             COALESCE((SELECT SUM(si.qty) FROM sale_items si JOIN sales s2 ON s2.id = si.sale_id
-                       WHERE s2.created_at BETWEEN ? AND ?), 0) AS items_sold
-       FROM sales
-      WHERE created_at BETWEEN ? AND ?'
+                       WHERE s2.created_at BETWEEN ? AND ? AND s2.status = "completed"), 0) AS items_sold
+       FROM sales s
+      WHERE s.created_at BETWEEN ? AND ?' . $Voided
 );
 $st->execute([$from, $to, $from, $to]);
 $k = $st->fetch();
@@ -125,8 +128,8 @@ $summary = [
 
 switch ($period) {
     case 'daily': 
-        $rows = $q('SELECT HOUR(created_at) AS h, SUM(total_amount) AS total, SUM(total_amount - total_cost) AS profit
-                      FROM sales WHERE created_at BETWEEN {F} AND {T} GROUP BY h');
+        $rows = $q('SELECT HOUR(s.created_at) AS h, SUM(s.total_amount) AS total, SUM(s.total_amount - s.total_cost) AS profit
+                      FROM sales s WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . ' GROUP BY h');
         $map = array_column($rows, null, 'h');
         $series = [];
         foreach (range(7, 21) as $h) {
@@ -139,8 +142,8 @@ switch ($period) {
         break;
 
     case 'weekly': 
-        $rows = $q('SELECT DATE(created_at) AS d, SUM(total_amount) AS total, SUM(total_amount - total_cost) AS profit
-                      FROM sales WHERE created_at BETWEEN {F} AND {T} GROUP BY d');
+        $rows = $q('SELECT DATE(s.created_at) AS d, SUM(s.total_amount) AS total, SUM(s.total_amount - s.total_cost) AS profit
+                      FROM sales s WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . ' GROUP BY d');
         $map = array_column($rows, null, 'd');
         $series = [];
         $cur = new DateTime(substr($from, 0, 10));
@@ -156,8 +159,8 @@ switch ($period) {
         break;
 
     case 'monthly': 
-        $rows = $q('SELECT DATE(created_at) AS d, SUM(total_amount) AS total, SUM(total_amount - total_cost) AS profit
-                      FROM sales WHERE created_at BETWEEN {F} AND {T} GROUP BY d');
+        $rows = $q('SELECT DATE(s.created_at) AS d, SUM(s.total_amount) AS total, SUM(s.total_amount - s.total_cost) AS profit
+                      FROM sales s WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . ' GROUP BY d');
         $map = array_column($rows, null, 'd');
         $series = [];
         $cur = new DateTime(substr($from, 0, 10));
@@ -174,8 +177,8 @@ switch ($period) {
         break;
 
     case 'custom': 
-        $rows = $q('SELECT DATE(created_at) AS d, SUM(total_amount) AS total, SUM(total_amount - total_cost) AS profit
-                      FROM sales WHERE created_at BETWEEN {F} AND {T} GROUP BY d');
+        $rows = $q('SELECT DATE(s.created_at) AS d, SUM(s.total_amount) AS total, SUM(s.total_amount - s.total_cost) AS profit
+                      FROM sales s WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . ' GROUP BY d');
         $map = array_column($rows, null, 'd');
         $series = [];
         $cur = new DateTime(substr($from, 0, 10));
@@ -193,8 +196,8 @@ switch ($period) {
         break;
 
     default: 
-        $rows = $q('SELECT DATE_FORMAT(created_at, "%Y-%m") AS m, SUM(total_amount) AS total, SUM(total_amount - total_cost) AS profit
-                      FROM sales WHERE created_at BETWEEN {F} AND {T} GROUP BY m ORDER BY m DESC LIMIT 12');
+        $rows = $q('SELECT DATE_FORMAT(s.created_at, "%Y-%m") AS m, SUM(s.total_amount) AS total, SUM(s.total_amount - s.total_cost) AS profit
+                      FROM sales s WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . ' GROUP BY m ORDER BY m DESC LIMIT 12');
         $map = array_column($rows, null, 'm');
         $series = [];
         $cur = new DateTime('first day of this month');
@@ -214,7 +217,7 @@ $topProducts = $q(
     'SELECT si.product_name AS name, SUM(si.qty) AS qty, SUM(si.subtotal) AS revenue,
             SUM(si.subtotal - si.unit_cost * si.qty) AS profit
        FROM sale_items si JOIN sales s ON s.id = si.sale_id
-      WHERE s.created_at BETWEEN {F} AND {T}
+      WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . '
       GROUP BY si.product_id, si.product_name
       ORDER BY revenue DESC LIMIT 10'
 );
@@ -228,7 +231,7 @@ unset($tp);
 $byCashier = $q(
     'SELECT u.full_name AS name, COUNT(*) AS transactions, SUM(s.total_amount) AS revenue
        FROM sales s JOIN users u ON u.id = s.cashier_id
-      WHERE s.created_at BETWEEN {F} AND {T}
+      WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . '
       GROUP BY s.cashier_id, u.full_name ORDER BY revenue DESC'
 );
 foreach ($byCashier as &$bc) {
@@ -243,7 +246,7 @@ $byCategory = $q(
        JOIN sales s    ON s.id = si.sale_id
        JOIN products p ON p.id = si.product_id
        JOIN categories c ON c.id = p.category_id
-      WHERE s.created_at BETWEEN {F} AND {T}
+      WHERE s.created_at BETWEEN {F} AND {T}' . $Voided . '
       GROUP BY c.id, c.name ORDER BY revenue DESC'
 );
 foreach ($byCategory as &$bcg) {
@@ -253,7 +256,7 @@ foreach ($byCategory as &$bcg) {
 unset($bcg);
 
 $recent = $q(
-    'SELECT s.id, s.receipt_no, s.created_at, u.full_name AS cashier, s.total_amount, s.payment_method
+    'SELECT s.id, s.receipt_no, s.created_at, u.full_name AS cashier, s.total_amount, s.payment_method, s.status
        FROM sales s JOIN users u ON u.id = s.cashier_id
       WHERE s.created_at BETWEEN {F} AND {T}
       ORDER BY s.created_at DESC LIMIT 15'

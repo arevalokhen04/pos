@@ -24,8 +24,8 @@ switch ($action) {
         $role     = in_array($input['role'] ?? '', ['super_admin', 'admin', 'cashier'], true) ? $input['role'] : 'cashier';
         $phone    = trim($input['phone'] ?? '');
 
-        if ($username === '' || $fullName === '' || strlen($password) < 6) {
-            json_out(['success' => false, 'message' => 'Fill up all fields. Password must be at least 6 characters.']);
+        if ($username === '' || $fullName === '' || ($pwErr = validate_password($password)) !== null) {
+            json_out(['success' => false, 'message' => 'Fill up all fields. ' . ($pwErr ?: 'Username and full name are required.')]);
         }
         $st = db()->prepare('SELECT id FROM users WHERE username = ?');
         $st->execute([$username]);
@@ -79,8 +79,9 @@ switch ($action) {
     case 'reset_password':
         $id = (int)($input['id'] ?? 0);
         $password = $input['password'] ?? '';
-        if (!$id || strlen($password) < 6) {
-            json_out(['success' => false, 'message' => 'Password must be at least 6 characters.']);
+        $pwErr = $id ? validate_password($password) : 'Missing user id.';
+        if ($pwErr !== null) {
+            json_out(['success' => false, 'message' => $pwErr]);
         }
         $st = db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
         $st->execute([password_hash($password, PASSWORD_BCRYPT), $id]);

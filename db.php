@@ -74,7 +74,26 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'posinventory');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('VOID_PASSWORD', 'admin123'); 
+define('VOID_PASSWORD', 'admin123');
+
+/* Password policy (r4: uniform across registration, user creation and resets):
+   at least 8 characters with both letters and numbers. */
+function validate_password(string $password): ?string
+{
+    if (strlen($password) < 8 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        return 'Password must be at least 8 characters and contain both letters and numbers.';
+    }
+    return null;
+}
+
+/* Session idle limit (seconds) — a session idle longer than this is killed
+   server-side on the next request; the UI also auto-logs out proactively. */
+define('SESSION_IDLE_LIMIT', 1800);
+
+/* Token for the scheduled auto-backup entry point (api_backup.php?action=auto_check&token=...).
+   Used by Windows Task Scheduler / cron so backups run even when nobody is logged in.
+   CHANGE THIS to a long random string before deploying online. */
+define('BACKUP_CRON_TOKEN', 'mh-cron-CHANGE-ME-9f4c2b');
 
 function db(): PDO
 {
@@ -138,6 +157,13 @@ function current_user(): ?array
     if (empty($_SESSION['user_id'])) {
         return null;
     }
+    /* idle timeout: kill sessions with no activity for SESSION_IDLE_LIMIT seconds */
+    if (isset($_SESSION['last_activity']) && (time() - (int)$_SESSION['last_activity']) > SESSION_IDLE_LIMIT) {
+        session_unset();
+        session_destroy();
+        return null;
+    }
+    $_SESSION['last_activity'] = time();
     static $cached = null;
     if ($cached === null) {
         $st = db()->prepare('SELECT id, username, full_name, role, status FROM users WHERE id = ?');
