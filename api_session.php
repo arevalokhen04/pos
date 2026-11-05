@@ -54,6 +54,15 @@ switch ($action) {
         audit_log($user, 'clock_out', 'session', (int)$sess['id'], 'Clock out with ending cash ' . peso($endingCash));
         json_out(['success' => true, 'message' => 'Clocked out at ' . date('g:i A')]);
 
+    case 'void_log':
+        /* audit trail for successful voids and cart clears (r10: audit events for voids) */
+        $kind  = ($input['kind'] ?? '') === 'clear' ? 'cart_clear' : 'item_void';
+        $items = trim((string)($input['items'] ?? ''));
+        if ($items !== '') {
+            audit_log($user, $kind, 'sale', null, mb_substr($items, 0, 255));
+        }
+        json_out(['success' => true]);
+
     case 'void_auth':
         
         mh_session_start();

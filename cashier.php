@@ -593,6 +593,8 @@ createApp({
         if (!ok) return;
         cart.value.splice(i, 1);
         persistCart();
+        /* audit trail — makikita sa History Logs ng admin */
+        api('api_session.php?action=void_log', { kind: 'item', items: 'Voided ' + it.qty + ' ' + it.unit + ' ' + it.name + ' (' + fmtP(it.price * it.qty) + ') by ' + me.full_name });
         toast('success', 'Voided: ' + it.name);
       });
     }
@@ -600,9 +602,11 @@ createApp({
       if (!cart.value.length) return;
       askVoidPassword(t('Clear all items')).then(ok => {
         if (!ok) return;
+        const n = cart.value.length;
         cart.value = [];
         discount.value = 0;
         persistCart();
+        api('api_session.php?action=void_log', { kind: 'clear', items: 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ') by ' + me.full_name });
         toast('success', 'Cart cleared.');
       });
     }
