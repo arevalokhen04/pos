@@ -90,7 +90,7 @@ $vat         = $gross - $vatable;
   <div class="c">
     <div class="store"><span class="brand-color">MARINA'S</span> HARDWARE</div>
     <div class="tiny">Hardware &amp; Construction Supplies</div>
-    <div class="tiny">Purok 4, Brgy. San Isidro, Santa Rosa, Laguna</div>
+    <div class="tiny">Purok Gulod, Barangay Bago, General Tinio, Nueva Ecija</div>
     <div class="tiny">VAT REG TIN:124-839-761-00000</div>
     
   </div>
