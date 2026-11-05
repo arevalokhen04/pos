@@ -2728,18 +2728,9 @@ const __app = createApp({
       if (bootLoader) bootLoader.remove();
       
       
-      const savedView = sessionStorage.getItem('mh_admin_view');
-      const validForRole = ['dashboard', 'inventory', 'stocksdisplay', 'requests', 'reports', 'audit'];
-      if (isSuper) {
-        /* Super Admin always lands on the Dashboard */
-        sessionStorage.setItem('mh_admin_view', 'dashboard');
-        go('dashboard');
-      } else if (savedView && validForRole.includes(savedView)) {
-        go(savedView);
-      } else {
-        sessionStorage.setItem('mh_admin_view', 'dashboard');
-        go('dashboard');
-      }
+      /* Both panels always open on the Dashboard on login and F5 */
+      sessionStorage.setItem('mh_admin_view', 'dashboard');
+      go('dashboard');
       loadCats();
       loadUnread();
       loadCounts();
