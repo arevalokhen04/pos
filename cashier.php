@@ -410,6 +410,8 @@ createApp({
       '💰 Checkout': '💰 Bayad', 'Items': 'Mga item', 'Discount': 'Diskwento',
       'Payment method': 'Paraan ng bayad', '💵 Cash': '💵 Cash', 'Amount received (₱)': 'Halagang binayad (₱)',
       'Discount above 10% — supervisor password': 'Diskwentong lagpas 10% — password ng supervisor',
+      'Receipt sent to the printer.': 'Naipadala ang resibo sa printer.',
+      'Printing failed — check that the printer is on and has paper.': 'Hindi na-print — tingnan kung naka-on at may papel ang printer.',
       'Authorize void': 'Awtorisasyon ng void', 'Void sale': 'I-void ang benta', 'Reason (required)': 'Dahilan (kailangan)',
       'Exact': 'Eksakto', 'Round ↑': 'Round ↑', 'Change': 'Sukli', 'Back': 'Bumalik',
       'Processing…': 'Pinoproseso…', '✔ Complete sale': '✔ Tapusin ang benta',
@@ -734,9 +736,12 @@ createApp({
         toast('error', r.message);
       }
     }
-    function printReceipt() {
-      window.open('api_print.php?sale_id=' + lastSale.value.id, '_blank', 'width=420,height=640');
+    /* print straight to the thermal printer (r4) — no dialog, no popup */
+    async function printRaw(saleId) {
+      const r = await api('api_print.php?action=raw&sale_id=' + saleId, {});
+      toast(r.success ? 'success' : 'error', r.message);
     }
+    function printReceipt() { printRaw(lastSale.value.id); }
     function newSale() { lastSale.value = null; scanInput.value?.focus(); }
 
     
@@ -759,9 +764,7 @@ createApp({
       hist.open = true;
       loadHistory();
     }
-    function reprint(saleId) {
-      window.open('api_print.php?sale_id=' + saleId, '_blank', 'width=430,height=700');
-    }
+    function reprint(saleId) { printRaw(saleId); }
     function viewReceipt(s) {
       preview.saleId = s.id;
       preview.receiptNo = s.receipt_no;

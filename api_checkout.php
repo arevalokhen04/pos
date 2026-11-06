@@ -220,6 +220,10 @@ foreach ($lines as $l) {
 
 audit_log($user, 'checkout', 'sale', $saleId, 'Sale ' . $receiptNo . ' total ' . peso($total) . ' (' . count($lines) . ' items, ' . $method . ($discount > 0 ? ', discount ' . peso($discount) . '/' . $discPct . '%' : '') . ')');
 
+/* automatic receipt printing (r4) — fire-and-forget, never blocks the sale response */
+require_once __DIR__ . '/mh_print_raw.php';
+mh_print_sale_raw_async($saleId);
+
 $saleRow = find_sale_by_idem($idemKey) ?: null;
 json_out([
     'success' => true,

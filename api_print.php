@@ -5,6 +5,27 @@ require __DIR__ . '/db.php';
 $user = require_login();
 $saleId = (int)($_GET['sale_id'] ?? 0);
 
+/* raw thermal print (r4): POST via cashier UI or any client — no dialog, straight to POS58 */
+if (($_GET['action'] ?? '') === 'raw') {
+    require_once __DIR__ . '/mh_print_raw.php';
+    $st = db()->prepare('SELECT cashier_id FROM sales WHERE id = ?');
+    $st->execute([$saleId]);
+    $own = $st->fetch();
+    if (!$own) {
+        json_out(['success' => false, 'message' => 'Receipt not found.']);
+    }
+    if ($user['role'] === 'cashier' && (int)$own['cashier_id'] !== (int)$user['id']) {
+        json_out(['success' => false, 'message' => 'You can only print your own receipts.']);
+    }
+    $ok = mh_print_sale_raw($saleId);
+    json_out([
+        'success' => $ok,
+        'message' => $ok
+            ? 'Receipt sent to the printer.'
+            : 'Printing failed — check that the printer is on and has paper.',
+    ]);
+}
+
 $st = db()->prepare(
     'SELECT s.*, u.full_name AS cashier_name FROM sales s JOIN users u ON u.id = s.cashier_id WHERE s.id = ?'
 );
