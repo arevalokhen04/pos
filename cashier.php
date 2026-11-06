@@ -20,7 +20,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cashier POS — Marina's Hardware</title>
 <link rel="stylesheet" href="Assets/sweetalert2.min.css?v=2">
-<link rel="stylesheet" href="Assets/cashier.css?v=11">
+<link rel="stylesheet" href="Assets/cashier.css?v=12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -194,7 +194,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
             </div>
             <div class="c-amt">{{ fmtP(it.price * it.qty) }}</div>
             <div class="qty-ctl">
-              <button @click="qty(i,-1)">−</button>
+              <button v-if="it.qty > 1" @click="qty(i,-1)">−</button>
               <input class="q-input" type="number" min="1" :max="it.stock" inputmode="numeric"
                      :value="it.qty"
                      @input="setQty(i, $event.target.value)"
