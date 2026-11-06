@@ -48,9 +48,8 @@ $items = $st->fetchAll();
 
 $total       = (float)$sale['total_amount'];
 $discount    = (float)$sale['discount'];
-$gross       = $total + $discount;      
-$vatable     = $gross / 1.12;
-$vat         = $gross - $vatable;
+$gross       = $total + $discount;
+$pctTax      = round($total * 0.03, 2); /* 3% percentage tax — non-VAT business */
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -167,7 +166,7 @@ $vat         = $gross - $vatable;
   <div class="hr"></div>
 
   
-  <div class="row"><span class="l">Subtotal (VAT inclusive)</span><span class="r"><?= number_format($gross, 2) ?></span></div>
+  <div class="row"><span class="l">Subtotal</span><span class="r"><?= number_format($gross, 2) ?></span></div>
   <?php if ($discount > 0): ?>
   <div class="row"><span class="l">Less: Discount</span><span class="r">-<?= number_format($discount, 2) ?></span></div>
   <?php endif; ?>
@@ -177,12 +176,9 @@ $vat         = $gross - $vatable;
 
   
   <div class="row"><span class="l"><b>TAX BREAKDOWN</b></span><span class="r"></span></div>
-  <div class="row"><span class="l">VAT Rate</span><span class="r">12%</span></div>
-  <div class="row"><span class="l">VATable Sales</span><span class="r"><?= number_format($vatable, 2) ?></span></div>
-  <div class="row"><span class="l">VAT-Exempt Sales</span><span class="r">0.00</span></div>
-  <div class="row"><span class="l">Zero-Rated Sales</span><span class="r">0.00</span></div>
-  <div class="row"><span class="l">VAT Amount (12%)</span><span class="r"><?= number_format($vat, 2) ?></span></div>
-  <div class="row"><span class="l"><b>Total Tax</b></span><span class="r"><b><?= number_format($vat, 2) ?></b></span></div>
+  <div class="row"><span class="l">Tax Type</span><span class="r">Percentage Tax</span></div>
+  <div class="row"><span class="l">Tax Rate</span><span class="r">3%</span></div>
+  <div class="row"><span class="l"><b>Tax Amount</b></span><span class="r"><b><?= number_format($pctTax, 2) ?></b></span></div>
 
   <div class="hr"></div>
 

@@ -286,29 +286,6 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
   </div>
 
   
-  <div class="modal-mask" v-if="lastSale">
-    <div class="modal">
-      <div class="success-card">
-        <div class="big-check">✅</div>
-        <h3>{{ t('Sale completed!') }}</h3>
-        <div class="muted">{{ t('Receipt') }} <b>{{ lastSale.receipt_no }}</b> · {{ lastSale.created_at }}</div>
-
-        <div class="success-meta">
-          <span class="k">{{ t('Total') }}</span><span class="v">{{ fmtP(lastSale.total) }}</span>
-          <span class="k">{{ t('Paid') }} ({{ lastSale.method }})</span><span class="v">{{ fmtP(lastSale.paid) }}</span>
-          <span class="k">{{ t('Change') }}</span><span class="v">{{ fmtP(lastSale.change) }}</span>
-          <span class="k">{{ t('Items') }}</span><span class="v">{{ lastSale.items.reduce((s,i)=>s+i.qty,0) }}</span>
-        </div>
-
-        <div class="success-actions">
-          <button class="btn btn-outline" @click="newSale">{{ t('New sale') }}</button>
-          <button class="btn btn-primary" @click="printReceipt">{{ t('🖨 Print receipt') }}</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
   <div class="modal-mask" v-if="hist.open" @click.self="hist.open=false">
     <div class="modal" style="max-width:600px">
       <div class="modal-head">
@@ -410,6 +387,8 @@ createApp({
       '💰 Checkout': '💰 Bayad', 'Items': 'Mga item', 'Discount': 'Diskwento',
       'Payment method': 'Paraan ng bayad', '💵 Cash': '💵 Cash', 'Amount received (₱)': 'Halagang binayad (₱)',
       'Discount above 10% — supervisor password': 'Diskwentong lagpas 10% — password ng supervisor',
+      'Sale completed — receipt printing.': 'Tapos na ang benta — nagpi-print ang resibo.',
+      'Checkout was already completed — reprinting the original receipt.': 'Tapos na itong checkout — ini-print muli ang orihinal na resibo.',
       'Receipt sent to the printer.': 'Naipadala ang resibo sa printer.',
       'Printing failed — check that the printer is on and has paper.': 'Hindi na-print — tingnan kung naka-on at may papel ang printer.',
       'Authorize void': 'Awtorisasyon ng void', 'Void sale': 'I-void ang benta', 'Reason (required)': 'Dahilan (kailangan)',
@@ -450,7 +429,6 @@ createApp({
     const tendered = ref(0);
     const tenderInput = ref(null);
     const paying = ref(false);
-    const lastSale = ref(null);
 
     const clockModal = ref(false);
     const startingCash = ref(0);
@@ -696,7 +674,6 @@ createApp({
       paying.value = false;
       if (r.success) {
         payRef.value = newPayRef();  /* fresh key for the next sale */
-        lastSale.value = r.sale;
         payModal.value = false;
         cart.value = [];
         discount.value = 0;
@@ -704,7 +681,10 @@ createApp({
         loadProducts();
         loadUnread();
         if (hist.open) loadHistory();
-        if (r.duplicate) toast('info', 'This checkout was already completed — showing the original receipt.');
+        /* receipt auto-prints server-side (r4) — the toast is the only feedback */
+        toast('success', r.duplicate
+          ? t('Checkout was already completed — reprinting the original receipt.')
+          : t('Sale completed — receipt printing.'));
       } else {
         toast('error', r.message);
         loadProducts();
@@ -741,8 +721,6 @@ createApp({
       const r = await api('api_print.php?action=raw&sale_id=' + saleId, {});
       toast(r.success ? 'success' : 'error', r.message);
     }
-    function printReceipt() { printRaw(lastSale.value.id); }
-    function newSale() { lastSale.value = null; scanInput.value?.focus(); }
 
     
     async function loadSession() {
@@ -872,7 +850,6 @@ createApp({
       cart, cartCount, subtotal, total, discount, addToCart, qty, setQty, voidItem, clearCart, scanEnter, cartOpen,
       payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout, voidSale,
       exactCash, quickBills,
-      lastSale, printReceipt, newSale,
       session, clockModal, startingCash, clockIn, clockOut,
       hist, openHistory, reprint, viewReceipt, preview, loadHistory,
       bellOpen, userOpen, notifs, unread, loadNotifs, readNotif, markAllRead,

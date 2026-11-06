@@ -78,8 +78,7 @@ function mh_receipt_escpos(int $saleId): ?string
     $total    = (float)$sale['total_amount'];
     $discount = (float)$sale['discount'];
     $gross    = $total + $discount;
-    $vatable  = $gross / 1.12;
-    $vat      = $gross - $vatable;
+    $pctTax   = round($total * 0.03, 2); /* 3% percentage tax — non-VAT business */
 
     $E  = "\x1B"; /* ESC */
     $GS = "\x1D"; /* GS  */
@@ -105,7 +104,7 @@ function mh_receipt_escpos(int $saleId): ?string
     }
 
     $txt .= mh_rcpt_rule();
-    $txt .= mh_rcpt_row('Subtotal (VAT incl)', number_format($gross, 2));
+    $txt .= mh_rcpt_row('Subtotal', number_format($gross, 2));
     if ($discount > 0) {
         $txt .= mh_rcpt_row('Less: Discount', '-' . number_format($discount, 2));
     }
@@ -113,9 +112,9 @@ function mh_receipt_escpos(int $saleId): ?string
     $txt .= mh_rcpt_row('TOTAL AMOUNT', 'P ' . number_format($total, 2));
     $txt .= $E . '!' . "\x00";
     $txt .= mh_rcpt_rule();
-    $txt .= mh_rcpt_row('VAT Rate', '12%');
-    $txt .= mh_rcpt_row('VATable Sales', number_format($vatable, 2));
-    $txt .= mh_rcpt_row('VAT Amount (12%)', number_format($vat, 2));
+    $txt .= mh_rcpt_row('Tax Type', 'Percentage');
+    $txt .= mh_rcpt_row('Tax Rate', '3%');
+    $txt .= mh_rcpt_row('Tax Amount', number_format($pctTax, 2));
     $txt .= mh_rcpt_rule();
     $txt .= $E . '!' . "\x28";
     $txt .= mh_rcpt_row('CASH', number_format((float)$sale['amount_paid'], 2));
