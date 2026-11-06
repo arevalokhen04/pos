@@ -28,9 +28,11 @@ function mh_rcpt_center(string $s): string
 
 function mh_rcpt_wrap_center(string $s): string
 {
+    /* printer center mode (ESC a 1) is ON at every call site — no manual
+       padding here: spaces would be centered too and shift the line right */
     $out = '';
     foreach (str_split(mh_ascii($s), MH_RCPT_WIDTH) as $chunk) {
-        $out .= mh_rcpt_center(trim($chunk));
+        $out .= trim($chunk) . "\n";
     }
     return $out;
 }
@@ -85,7 +87,10 @@ function mh_receipt_escpos(int $saleId): ?string
 
     $txt  = $E . '@';                       /* initialize            */
     $txt .= $E . 'a' . "\x01";              /* center on             */
-    $txt .= $E . '!' . "\x38";              /* double + bold title   */
+    /* double-HEIGHT + bold only (normal width): "MARINA'S HARDWARE" is 17
+       chars — double-WIDTH would make it 34 columns and wrap on the 32-col
+       58mm printer (r4: title must fit on the first line) */
+    $txt .= $E . '!' . "\x18";
     $txt .= "MARINA'S HARDWARE\n";
     $txt .= $E . '!' . "\x00";              /* normal                */
     $txt .= mh_rcpt_wrap_center('Hardware & Construction Supplies');
