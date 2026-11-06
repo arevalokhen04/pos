@@ -8,27 +8,25 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
-/* Discount authorization threshold (r4: measurable rule) — discounts above
-   this percentage of the sale require the supervisor (void) password. */
-define('DISCOUNT_AUTH_PCT', 10);
-
-class DiscountDenied extends RuntimeException
-{
-}
-
+/* Discount rules (r4): cashiers may apply ONLY 0% or 5% (Senior Citizen) —
+   whitelisted server-side, no supervisor password needed. Anything else is
+   rejected, so the old free-form peso discount (and its >10% password gate)
+   is gone. */
 $input    = json_input();
 $items    = $input['items'] ?? [];
 $paid     = (float)($input['amount_paid'] ?? 0);
-$discount = max(0.0, (float)($input['discount'] ?? 0));
 /* cash-only business rule (user decision): every sale is recorded as cash —
    any posted payment_method is ignored */
-$method  = 'cash';
+$method   = 'cash';
+$discPct  = (float)($input['discount_pct'] ?? 0);
+if (!in_array($discPct, [0.0, 5.0], true)) {
+    json_out(['success' => false, 'message' => 'Invalid discount — only 0% or 5% (Senior Citizen) is allowed.'], 400);
+}
 /* idempotency key (r4: duplicate submission prevention) — one key per checkout attempt */
 $idemKey  = trim((string)($input['idempotency_key'] ?? ''));
 if ($idemKey !== '') {
     $idemKey = mb_substr($idemKey, 0, 64);
 }
-$discountAuth = (string)($input['discount_auth'] ?? '');
 
 if (!$items || !is_array($items)) {
     json_out(['success' => false, 'message' => 'Cart is empty.']);
@@ -135,26 +133,9 @@ try {
         throw new RuntimeException('Cart is empty.');
     }
 
-    /* discount authorization: anything above DISCOUNT_AUTH_PCT% of the sale
-       needs the supervisor password (validated server-side, audited on denial) */
-    $discount = min($discount, $total);
-    $discPct  = $total > 0 ? round($discount / $total * 100, 2) : 0;
-    if ($discount > 0 && $discPct > DISCOUNT_AUTH_PCT) {
-        mh_session_start();
-        if (!empty($_SESSION['disc_lock']) && time() < $_SESSION['disc_lock']) {
-            throw new DiscountDenied('Too many failed authorization attempts. Try again in ' . ceil($_SESSION['disc_lock'] - time()) . ' seconds.');
-        }
-        if ($discountAuth === '' || !hash_equals(VOID_PASSWORD, $discountAuth)) {
-            $_SESSION['disc_fails'] = ($_SESSION['disc_fails'] ?? 0) + 1;
-            if ($_SESSION['disc_fails'] >= 5) {
-                $_SESSION['disc_lock'] = time() + 60;
-                $_SESSION['disc_fails'] = 0;
-            }
-            throw new DiscountDenied('Discount of ' . $discPct . '% exceeds the ' . DISCOUNT_AUTH_PCT . '% limit — supervisor password required.');
-        }
-        unset($_SESSION['disc_fails'], $_SESSION['disc_lock']);
-    }
-
+    /* discount: whitelisted 0% or 5% Senior Citizen — computed server-side
+       from the true gross; the cashier applies it directly (no password) */
+    $discount = round($total * $discPct / 100, 2);
     $total = round($total - $discount, 2);
 
     /* cash must cover the total */
@@ -202,10 +183,6 @@ try {
         $mv->execute([$p['id'], $user['id'], $l['qty'], 'Sale ' . $receiptNo]);
     }
     $pdo->commit();
-} catch (DiscountDenied $e) {
-    $pdo->rollBack();
-    audit_log($user, 'discount_denied', 'sale', null, $e->getMessage());
-    json_out(['success' => false, 'message' => $e->getMessage()], 403);
 } catch (RuntimeException $e) {
     $pdo->rollBack();
     json_out(['success' => false, 'message' => $e->getMessage()], 400);
@@ -218,7 +195,7 @@ foreach ($lines as $l) {
     check_low_stock((int)$l['product']['id']);
 }
 
-audit_log($user, 'checkout', 'sale', $saleId, 'Sale ' . $receiptNo . ' total ' . peso($total) . ' (' . count($lines) . ' items, ' . $method . ($discount > 0 ? ', discount ' . peso($discount) . '/' . $discPct . '%' : '') . ')');
+audit_log($user, 'checkout', 'sale', $saleId, 'Sale ' . $receiptNo . ' total ' . peso($total) . ' (' . count($lines) . ' items, ' . $method . ($discount > 0 ? ', senior citizen 5% discount ' . peso($discount) : '') . ')');
 
 /* automatic receipt printing (r4) — fire-and-forget, never blocks the sale response */
 require_once __DIR__ . '/mh_print_raw.php';

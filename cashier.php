@@ -208,13 +208,6 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 
         <div class="cart-foot">
           <div class="tot-row"><span>{{ t('Subtotal') }}</span><span class="num">{{ fmtP(subtotal) }}</span></div>
-          <div class="tot-row">
-            <span>{{ t('Discount (₱)') }}</span>
-            <span class="num">
-              <input v-model.number="discount" type="number" min="0" step="0.01"
-                     style="width:110px;text-align:right;padding:4px 8px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit">
-            </span>
-          </div>
           <div class="tot-row grand"><span>{{ t('TOTAL') }}</span><span>{{ fmtP(total) }}</span></div>
           <button class="btn-checkout" :disabled="!cart.length" @click="openCheckout">
             💰 {{ t('Charge') }} {{ fmtP(total) }}
@@ -251,8 +244,16 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         <div class="pay-summary">
           <div class="pay-line"><span>{{ t('Items') }}</span><b>{{ cartCount }}</b></div>
           <div class="pay-line"><span>{{ t('Subtotal') }}</span><span>{{ fmtP(subtotal) }}</span></div>
-          <div class="pay-line"><span>{{ t('Discount') }}</span><span>−{{ fmtP(discount || 0) }}</span></div>
+          <div class="pay-line"><span>{{ t('Discount') }}</span><span>−{{ fmtP(discountPeso) }}</span></div>
           <div class="pay-line total"><span>{{ t('TOTAL') }}</span><span>{{ fmtP(total) }}</span></div>
+        </div>
+
+        <div class="f">
+          <label>{{ t('Discount') }}</label>
+          <select v-model.number="discPct">
+            <option :value="0">{{ t('0% — None') }}</option>
+            <option :value="5">{{ t('5% — Senior Citizen') }}</option>
+          </select>
         </div>
 
         <div class="f">
@@ -387,6 +388,7 @@ createApp({
       '💰 Checkout': '💰 Bayad', 'Items': 'Mga item', 'Discount': 'Diskwento',
       'Payment method': 'Paraan ng bayad', '💵 Cash': '💵 Cash', 'Amount received (₱)': 'Halagang binayad (₱)',
       'Discount above 10% — supervisor password': 'Diskwentong lagpas 10% — password ng supervisor',
+      '0% — None': '0% — Wala', '5% — Senior Citizen': '5% — Senior Citizen',
       'Sale completed — receipt printing.': 'Tapos na ang benta — nagpi-print ang resibo.',
       'Checkout was already completed — reprinting the original receipt.': 'Tapos na itong checkout — ini-print muli ang orihinal na resibo.',
       'Receipt sent to the printer.': 'Naipadala ang resibo sa printer.',
@@ -418,11 +420,10 @@ createApp({
     
     const savedCart = JSON.parse(localStorage.getItem('mh_cart') || '[]');
     const cart = ref(Array.isArray(savedCart) ? savedCart.filter(i => i && i.id && i.qty > 0) : []);
-    const cartOpen = ref(false); 
-    const discount = ref(Number(localStorage.getItem('mh_discount') || 0));
+    const cartOpen = ref(false);
+    const discPct = ref(0);   /* 0 = none, 5 = Senior Citizen — whitelist enforced server-side */
     function persistCart() {
       localStorage.setItem('mh_cart', JSON.stringify(cart.value));
-      localStorage.setItem('mh_discount', String(discount.value || 0));
     }
     const payModal = ref(false);
     const payMethod = ref('cash');
@@ -521,7 +522,8 @@ createApp({
     
     const cartCount = computed(() => cart.value.reduce((s, i) => s + i.qty, 0));
     const subtotal = computed(() => cart.value.reduce((s, i) => s + i.price * i.qty, 0));
-    const total = computed(() => Math.max(0, subtotal.value - (discount.value || 0)));
+    const discountPeso = computed(() => Math.round(subtotal.value * (discPct.value || 0)) / 100);
+    const total = computed(() => Math.max(0, subtotal.value - discountPeso.value));
     const exactCash = computed(() => Math.ceil(total.value * 100) / 100);
     const quickBills = computed(() => {
       const t = total.value;
@@ -596,10 +598,10 @@ createApp({
         /* audit trail with the actual cancelled cart contents (r4: cancelled transactions) */
         const details = 'Cart cleared by ' + me.full_name + ': ' + cart.value
           .map(i => i.qty + 'x ' + i.name + ' (' + fmtP(i.price * i.qty) + ')').join(', ')
-          + (discount.value ? ' — discount ' + fmtP(discount.value) : '');
+          + (discPct.value ? ' — SC discount ' + fmtP(discountPeso.value) : '');
         const n = cart.value.length;
         cart.value = [];
-        discount.value = 0;
+        discPct.value = 0;
         persistCart();
         api('api_session.php?action=void_log', { kind: 'clear', items: details });
         toast('success', 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ').');
@@ -642,6 +644,7 @@ createApp({
     function openCheckout() {
       tendered.value = 0;
       payMethod.value = 'cash';
+      discPct.value = 0;            /* fresh sale — no discount unless chosen */
       payRef.value = newPayRef();   /* one idempotency key per checkout attempt (r4) */
       payModal.value = true;
       setTimeout(() => tenderInput.value?.focus(), 120);
@@ -656,27 +659,20 @@ createApp({
     async function checkout() {
       if (!session.open) return toast('warning', 'Please clock in first');
       if (paying.value) return;
-      /* discounts above 10% need the supervisor password (server re-validates) */
-      let discAuth = '';
-      if ((discount.value || 0) > 0 && discount.value > subtotal.value * 0.10) {
-        discAuth = await askVoidPassword(t('Discount above 10% — supervisor password'));
-        if (discAuth === null) return;
-      }
       paying.value = true;
       const r = await api('api_checkout.php', {
         items: cart.value.map(i => ({ product_id: i.id, qty: i.qty })),
-        amount_paid: payMethod.value === 'gcash' ? total.value : tendered.value,
-        discount: discount.value || 0,
+        amount_paid: tendered.value,
+        discount_pct: discPct.value || 0,
         payment_method: payMethod.value,
         idempotency_key: payRef.value,
-        discount_auth: discAuth,
       });
       paying.value = false;
       if (r.success) {
         payRef.value = newPayRef();  /* fresh key for the next sale */
         payModal.value = false;
         cart.value = [];
-        discount.value = 0;
+        discPct.value = 0;
         persistCart();
         loadProducts();
         loadUnread();
@@ -847,7 +843,7 @@ createApp({
     return {
       lang, saveLang, t, langOpen, pickLang,
       me, loading, products, cats, cat, search, scanInput, filtered, catIcon, loadProducts, avail,
-      cart, cartCount, subtotal, total, discount, addToCart, qty, setQty, voidItem, clearCart, scanEnter, cartOpen,
+      cart, cartCount, subtotal, total, discPct, discountPeso, addToCart, qty, setQty, voidItem, clearCart, scanEnter, cartOpen,
       payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout, voidSale,
       exactCash, quickBills,
       session, clockModal, startingCash, clockIn, clockOut,
