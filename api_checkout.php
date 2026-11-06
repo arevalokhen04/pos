@@ -20,7 +20,7 @@ $paid     = (float)($input['amount_paid'] ?? 0);
 $method   = 'cash';
 $discPct  = (float)($input['discount_pct'] ?? 0);
 if (!in_array($discPct, [0.0, 5.0], true)) {
-    json_out(['success' => false, 'message' => 'Invalid discount — only 0% or 5% (Senior Citizen) is allowed.'], 400);
+    json_out(['success' => false, 'message' => 'Invalid discount — only 0% or 5% (Senior Citizen / PWD) is allowed.'], 400);
 }
 /* idempotency key (r4: duplicate submission prevention) — one key per checkout attempt */
 $idemKey  = trim((string)($input['idempotency_key'] ?? ''));
@@ -195,7 +195,7 @@ foreach ($lines as $l) {
     check_low_stock((int)$l['product']['id']);
 }
 
-audit_log($user, 'checkout', 'sale', $saleId, 'Sale ' . $receiptNo . ' total ' . peso($total) . ' (' . count($lines) . ' items, ' . $method . ($discount > 0 ? ', senior citizen 5% discount ' . peso($discount) : '') . ')');
+audit_log($user, 'checkout', 'sale', $saleId, 'Sale ' . $receiptNo . ' total ' . peso($total) . ' (' . count($lines) . ' items, ' . $method . ($discount > 0 ? ', senior citizen/pwd 5% discount ' . peso($discount) : '') . ')');
 
 /* automatic receipt printing (r4) — fire-and-forget, never blocks the sale response */
 require_once __DIR__ . '/mh_print_raw.php';

@@ -252,7 +252,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
           <label>{{ t('Discount') }}</label>
           <select v-model.number="discPct">
             <option :value="0">{{ t('0% — None') }}</option>
-            <option :value="5">{{ t('5% — Senior Citizen') }}</option>
+            <option :value="5">{{ t('5% — Senior Citizen / PWD') }}</option>
           </select>
         </div>
 
@@ -388,7 +388,7 @@ createApp({
       '💰 Checkout': '💰 Bayad', 'Items': 'Mga item', 'Discount': 'Diskwento',
       'Payment method': 'Paraan ng bayad', '💵 Cash': '💵 Cash', 'Amount received (₱)': 'Halagang binayad (₱)',
       'Discount above 10% — supervisor password': 'Diskwentong lagpas 10% — password ng supervisor',
-      '0% — None': '0% — Wala', '5% — Senior Citizen': '5% — Senior Citizen',
+      '0% — None': '0% — Wala', '5% — Senior Citizen / PWD': '5% — Senior Citizen / PWD',
       'Sale completed — receipt printing.': 'Tapos na ang benta — nagpi-print ang resibo.',
       'Checkout was already completed — reprinting the original receipt.': 'Tapos na itong checkout — ini-print muli ang orihinal na resibo.',
       'Receipt sent to the printer.': 'Naipadala ang resibo sa printer.',
