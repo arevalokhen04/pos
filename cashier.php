@@ -258,9 +258,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 
         <div class="f">
           <label>{{ t('Payment method') }}</label>
-          <select v-model="payMethod">
-            <option value="cash">{{ t('💵 Cash') }}</option>
-          </select>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--green-50);font-weight:800;color:var(--green-800)">💵 {{ t('Cash') }}</div>
         </div>
 
         <div class="f" v-if="payMethod==='cash'">
