@@ -116,13 +116,10 @@ $pctTax      = round($total * 0.03, 2); /* 3% percentage tax — non-VAT busines
   </div>
 
   <div class="hr-solid"></div>
-  <div class="row sec">
-    <span class="l">SALES INVOICE</span>
-    <?php if (($sale['status'] ?? 'completed') === 'voided'): ?>
-      <span class="r" style="color:#b91c1c;font-size:16px;letter-spacing:3px">** VOID **</span>
-    <?php endif; ?>
-  </div>
   <?php if (($sale['status'] ?? 'completed') === 'voided'): ?>
+  <div class="row sec" style="color:#b91c1c">
+    <span class="l" style="font-size:16px;letter-spacing:3px">** VOID **</span>
+  </div>
   <div class="row tiny" style="color:#b91c1c">
     <span class="l">VOIDED <?= date('m/d/Y g:i A', strtotime($sale['voided_at'])) ?> — <?= htmlspecialchars($sale['void_reason'] ?? '') ?></span>
   </div>

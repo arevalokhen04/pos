@@ -93,7 +93,6 @@ function mh_receipt_escpos(int $saleId): ?string
     $txt .= mh_rcpt_wrap_center('VAT REG TIN:124-839-761-00000');
     $txt .= $E . 'a' . "\x00";              /* center off            */
     $txt .= mh_rcpt_rule('=');
-    $txt .= mh_rcpt_row('SALES INVOICE', $sale['receipt_no']);
     $txt .= mh_rcpt_row('Date', date('m/d/Y g:i A', strtotime($sale['created_at'])));
     $txt .= mh_rcpt_row('Cashier', $sale['cashier_name']);
     $txt .= mh_rcpt_rule();
