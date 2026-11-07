@@ -3,7 +3,7 @@
 require __DIR__ . '/db.php';
 $user = current_user();
 if (!$user) {
-    header('Location: Login.php');
+    header('Location: Login.php' . (empty($GLOBALS['mh_idle_expired']) ? '' : '?expired=1'));
     exit;
 }
 
@@ -468,7 +468,7 @@ createApp({
         credentials: 'same-origin',
       });
       const r = await res.json().catch(() => ({ success: false, message: 'Server error' }));
-      if (r.logout) location.href = 'Login.php';
+      if (r.logout) location.href = 'Login.php?expired=1';
       return r;
     }
     const toast = (icon, title) => Swal.fire({ icon, title, toast: true, position: 'top-end', showConfirmButton: false, timer: 2600 });
@@ -811,9 +811,9 @@ createApp({
     }
 
     
-    async function logout() {
+    async function logout(expired) {
       await api('auth.php?action=logout', {});
-      location.href = 'Login.php';
+      location.href = expired ? 'Login.php?expired=1' : 'Login.php';
     }
 
     /* global scanner capture (r4): hardware scanners type like a keyboard and
@@ -855,15 +855,32 @@ createApp({
       document.addEventListener('keydown', globalScanKey);
       scanInput.value?.focus();
 
-      /* idle auto-logout (r4: session policy) — the server enforces 30 min;
-         the UI logs out proactively at 28 min of no input */
+      /* idle auto-logout (r4: session policy) — the server enforces 2 hours
+         (SESSION_IDLE_LIMIT); the UI warns 5 minutes before, then signs out */
       let lastActive = Date.now();
+      let idleWarned = false;
       ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev =>
         document.addEventListener(ev, () => { lastActive = Date.now(); }, { passive: true })
       );
       setInterval(() => {
-        if (Date.now() - lastActive > 28 * 60 * 1000) {
-          logout();
+        const idleMin = (Date.now() - lastActive) / 60000;
+        if (idleMin >= 119) { logout(true); return; }
+        if (idleMin >= 115 && !idleWarned) {
+          idleWarned = true;
+          Swal.fire({
+            title: 'Still there?',
+            html: '<div style="font-size:13px;color:#52636f">For security, idle sessions are signed out after 2 hours.</div>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Continue working',
+            cancelButtonText: 'Sign out now',
+            allowOutsideClick: false,
+            timer: 150000,
+            timerProgressBar: true,
+          }).then(res => {
+            if (res.isConfirmed) { lastActive = Date.now(); idleWarned = false; }
+            else { logout(true); }
+          });
         }
       }, 30000);
     });

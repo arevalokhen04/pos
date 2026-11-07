@@ -87,8 +87,10 @@ function validate_password(string $password): ?string
 }
 
 /* Session idle limit (seconds) — a session idle longer than this is killed
-   server-side on the next request; the UI also auto-logs out proactively. */
-define('SESSION_IDLE_LIMIT', 1800);
+   server-side on the next request; the UI also auto-logs out proactively.
+   2 hours: still a written session policy (r4), but store-friendly for a
+   cashier counter that may sit idle between customers. */
+define('SESSION_IDLE_LIMIT', 7200);
 
 /* Token for the scheduled auto-backup entry point (api_backup.php?action=auto_check&token=...).
    Used by Windows Task Scheduler / cron so backups run even when nobody is logged in.
@@ -159,6 +161,7 @@ function current_user(): ?array
     }
     /* idle timeout: kill sessions with no activity for SESSION_IDLE_LIMIT seconds */
     if (isset($_SESSION['last_activity']) && (time() - (int)$_SESSION['last_activity']) > SESSION_IDLE_LIMIT) {
+        $GLOBALS['mh_idle_expired'] = true;   /* pages use this to show the "session expired" note */
         session_unset();
         session_destroy();
         return null;

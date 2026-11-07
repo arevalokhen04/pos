@@ -60,6 +60,10 @@ if ($LOGGED) {
           </button>
         </div>
 
+        <div v-if="expired" style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:9px;margin-bottom:12px">
+          ⏳ Your session expired for security. Please sign in again.
+        </div>
+
         <div class="card-tabs">
           <button :class="{active: tab==='login'}" @click="tab='login'">Sign in</button>
           <button :class="{active: tab==='register'}" @click="tab='register'">Register</button>
@@ -158,6 +162,7 @@ createApp({
   setup() {
     const signedIn = ref(SIGNED_IN);
     const tab = ref('login');
+    const expired = new URLSearchParams(location.search).get('expired') === '1';
     const loading = ref(false);
     const error = ref('');
     const showPass = ref(false);
@@ -229,7 +234,7 @@ createApp({
       Swal.fire({ icon: 'success', title: 'Signed out', text: 'You can now sign in with another account.', timer: 1400, showConfirmButton: false });
     }
 
-    return { signedIn, signOutSwitch, tab, loading, error, showPass, form, reg, pwChecks, pwValid, login, register };
+    return { signedIn, signOutSwitch, tab, loading, error, showPass, form, reg, pwChecks, pwValid, login, register, expired };
   },
 }).mount('#app');
 </script>

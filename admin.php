@@ -6,7 +6,7 @@ $IS_SUPER = $IS_SUPER ?? false;
 $user = current_user();
 
 if (!$user) {
-    header('Location: Login.php');
+    header('Location: Login.php' . (empty($GLOBALS['mh_idle_expired']) ? '' : '?expired=1'));
     exit;
 }
 if ($user['role'] === 'cashier') {
@@ -1764,7 +1764,7 @@ const __app = createApp({
         credentials: 'same-origin',
       });
       const r = await res.json().catch(() => ({ success: false, message: 'Server error' }));
-      if (r.logout) location.href = 'Login.php';
+      if (r.logout) location.href = 'Login.php?expired=1';
       return r;
     }
     const toast = (icon, title) => Swal.fire({ icon, title, toast: true, position: 'top-end', showConfirmButton: false, timer: 2600 });
