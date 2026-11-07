@@ -622,11 +622,13 @@ createApp({
     async function scanEnter() {
       const s = search.value.trim();
       if (!s) return;
-      let p = products.value.find(x => x.barcode === s);
+      /* case-insensitive barcode match — scanner input must always hit (r4) */
+      const up = s.toUpperCase();
+      let p = products.value.find(x => (x.barcode || '').toUpperCase() === up);
       if (!p) p = filtered.value[0];
       if (!p) {
         await loadProducts();
-        p = products.value.find(x => x.barcode === s);
+        p = products.value.find(x => (x.barcode || '').toUpperCase() === up);
         if (!p) p = filtered.value[0];
       }
       if (p) {
@@ -675,7 +677,7 @@ createApp({
         loadProducts();
         loadUnread();
         if (hist.open) loadHistory();
-        /* receipt auto-prints server-side (r4) — the toast is the only feedback */
+        scanInput.value?.focus();   /* ready for the next scan immediately */
         toast('success', r.duplicate
           ? t('Checkout was already completed — reprinting the original receipt.')
           : t('Sale completed — receipt printing.'));
