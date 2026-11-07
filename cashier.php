@@ -286,7 +286,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
 
   
   <div class="modal-mask" v-if="hist.open" @click.self="hist.open=false">
-    <div class="modal" style="max-width:600px">
+    <div class="modal" style="max-width:880px;width:94vw">
       <div class="modal-head">
         <h3>🧾 {{ hist.scope==='shift' ? t('Sales this shift') : t('My sales today') }}</h3>
         <button class="modal-close" @click="hist.open=false">✕</button>
@@ -309,7 +309,8 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
               <td class="num">{{ s.items }}</td>
               <td><span class="badge" :class="s.payment_method==='cash' ? 'b-green' : 'b-amber'">{{ s.payment_method }}</span></td>
               <td class="num strong">{{ fmtP(s.total_amount) }}</td>
-              <td style="white-space:nowrap">
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                 <template v-if="s.status !== 'voided'">
                   <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
                   <button class="btn btn-outline btn-sm" @click="reprint(s.id)">🖨 {{ t('Reprint') }}</button>
@@ -318,6 +319,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
                 <template v-else>
                   <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
                 </template>
+                </div>
               </td>
             </tr>
           </tbody>
