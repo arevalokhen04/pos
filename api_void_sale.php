@@ -35,7 +35,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['action'] ?? '') === 
           WHERE si.sale_id = ? ORDER BY si.id'
     );
     $it->execute([$saleId]);
-    json_out(['success' => true, 'receipt_no' => $s0['receipt_no'], 'items' => $it->fetchAll()]);
+    json_out(['success' => true, 'receipt_no' => $s0['receipt_no'], 'status' => $s0['status'], 'items' => $it->fetchAll()]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -171,10 +171,10 @@ try {
 if ($mode === 'items' && empty($fullVoid)) {
     audit_log($user, 'sale_void_partial', 'sale', $saleId, 'Partial void of ' . $sale['receipt_no'] . ' (' . peso($voidedAmount) . ') — ' . $reason);
     notify('role:admin', 'sale_void', 'Items voided', $user['full_name'] . ' voided items from ' . $sale['receipt_no'] . ': ' . $reason, 'reports.php');
-    json_out(['success' => true, 'message' => 'Items voided from ' . $sale['receipt_no'] . ' — stock returned and receipt total updated.']);
+    json_out(['success' => true, 'status' => 'completed', 'message' => 'Items voided from ' . $sale['receipt_no'] . ' — stock returned and receipt total updated.']);
 }
 
 audit_log($user, 'sale_void', 'sale', $saleId, 'Voided ' . $sale['receipt_no'] . ' (' . peso((float)$sale['total_amount']) . ') — ' . $reason);
 notify('role:admin', 'sale_void', 'Sale voided', $user['full_name'] . ' voided ' . $sale['receipt_no'] . ': ' . $reason, 'reports.php');
 
-json_out(['success' => true, 'message' => 'Sale ' . $sale['receipt_no'] . ' voided. Stock restored.']);
+json_out(['success' => true, 'status' => 'voided', 'message' => 'Sale ' . $sale['receipt_no'] . ' voided. Stock restored.']);

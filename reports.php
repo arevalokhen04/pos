@@ -96,7 +96,7 @@ if ($action === 'export') {
    every sale that was reversed, with who voided it and why. */
 if ($action === 'voided') {
     $st = db()->prepare(
-        'SELECT s.id, s.receipt_no, s.created_at, s.total_amount, s.voided_at, s.void_reason,
+        'SELECT s.id, s.receipt_no, s.created_at, s.total_amount, s.status, s.voided_at, s.void_reason,
                 u1.full_name AS cashier, u2.full_name AS voided_by
            FROM sales s
            JOIN users u1 ON u1.id = s.cashier_id

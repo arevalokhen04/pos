@@ -1273,7 +1273,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
               <iframe :src="rcptDetail.url" style="width:100%;height:520px;border:1.5px dashed var(--green-200);border-radius:12px;background:#fff" title="Receipt preview"></iframe>
             </div>
             <div class="modal-foot">
-              <button class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt">⛔ Void items</button>
+              <button v-if="!rcptDetail.voided" class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt">⛔ Void items</button>
               <button class="btn btn-outline" @click="rcptDetail.open=false">Close</button>
             </div>
           </div>
@@ -2577,10 +2577,11 @@ const __app = createApp({
     function exportCSV() { location.href = 'reports.php?' + reportQS().replace('action=summary', 'action=export'); }
 
     
-    const rcptDetail = reactive({ open: false, url: '', receiptNo: '', saleId: 0 });
+    const rcptDetail = reactive({ open: false, url: '', receiptNo: '', saleId: 0, voided: false });
     function viewReceiptAdmin(s) {
       rcptDetail.saleId = s.id;
       rcptDetail.receiptNo = s.receipt_no;
+      rcptDetail.voided = s.status === 'voided';
       rcptDetail.url = 'api_print.php?sale_id=' + s.id + '&preview=1';
       rcptDetail.open = true;
     }
@@ -2629,6 +2630,7 @@ const __app = createApp({
       const r2 = await api('api_void_sale.php', { mode: 'items', sale_id: rcptDetail.saleId, items: res.value.ids, reason: res.value.reason, password: pw.value || '' });
       if (r2.success) {
         toast('success', r2.message);
+        rcptDetail.voided = r2.status === 'voided';
         rcptDetail.url = 'api_print.php?sale_id=' + rcptDetail.saleId + '&preview=1&t=' + Date.now();
         if (view === 'reports') { if (rep.kind === 'voided') loadVoided(); else loadReport(); }
         if (view === 'dashboard') loadDashboard();

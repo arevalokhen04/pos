@@ -344,7 +344,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         <iframe v-show="!preview.loading" :src="preview.url" class="receipt-frame" @load="preview.loading=false" title="Receipt preview"></iframe>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt()">⛔ {{ t('Void items') }}</button>
+        <button v-if="!preview.voided" class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt()">⛔ {{ t('Void items') }}</button>
         <button class="btn btn-outline" @click="preview.open=false">{{ t('Close') }}</button>
         <button class="btn btn-primary" @click="reprint(preview.saleId)">🖨 {{ t('Print') }}</button>
       </div>
@@ -444,7 +444,7 @@ createApp({
     
     const hist = reactive({ open: false, loading: false, list: [], scope: 'shift', total: 0, count: 0 });
     
-    const preview = reactive({ open: false, loading: false, url: '', saleId: 0, receiptNo: '' });
+    const preview = reactive({ open: false, loading: false, url: '', saleId: 0, receiptNo: '', voided: false });
 
     
     const fmtP = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -768,6 +768,7 @@ createApp({
       const r2 = await api('api_void_sale.php', { mode: 'items', sale_id: preview.saleId, items: res.value.ids, reason: res.value.reason, password: pw });
       if (r2.success) {
         toast('success', r2.message);
+        preview.voided = r2.status === 'voided';
         preview.loading = true;
         preview.url = 'api_print.php?sale_id=' + preview.saleId + '&preview=1&t=' + Date.now();
         loadHistory();
@@ -782,6 +783,7 @@ createApp({
       preview.receiptNo = s.receipt_no;
       preview.url = 'api_print.php?sale_id=' + s.id + '&preview=1';
       preview.loading = true;
+      preview.voided = s.status === 'voided';
       preview.open = true;
     }
     async function clockIn() {
