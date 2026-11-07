@@ -816,6 +816,33 @@ createApp({
       location.href = 'Login.php';
     }
 
+    /* global scanner capture (r4): hardware scanners type like a keyboard and
+       end with Enter. If the scan box is not focused (cashier clicked elsewhere),
+       the keystrokes would be lost — so listen at document level: any burst of
+       code characters ending in Enter outside an input is treated as a scan. */
+    let scanBuf = '';
+    let scanTimer = null;
+    function globalScanKey(e) {
+      const ae = document.activeElement;
+      const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable);
+      if (typing) { scanBuf = ''; return; }          /* normal input path handles it */
+      if (e.key === 'Enter') {
+        if (scanBuf.length >= 4) {
+          search.value = scanBuf;
+          scanEnter();
+        }
+        scanBuf = '';
+        return;
+      }
+      if (e.key.length === 1 && /[A-Za-z0-9\-]/.test(e.key)) {
+        scanBuf += e.key;
+        clearTimeout(scanTimer);
+        scanTimer = setTimeout(() => { scanBuf = ''; }, 600);
+      } else if (e.key !== 'Shift') {
+        scanBuf = '';
+      }
+    }
+
     onMounted(() => {
       loadProducts();
       loadCats();
@@ -825,6 +852,7 @@ createApp({
       
       setInterval(loadProducts, 60000);
       document.addEventListener('click', () => { bellOpen.value = false; userOpen.value = false; });
+      document.addEventListener('keydown', globalScanKey);
       scanInput.value?.focus();
 
       /* idle auto-logout (r4: session policy) — the server enforces 30 min;
