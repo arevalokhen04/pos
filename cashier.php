@@ -586,19 +586,16 @@ createApp({
     }
     function clearCart() {
       if (!cart.value.length) return;
-      askVoidPassword(t('Clear all items')).then(pw => {
-        if (pw === null) return;
-        /* audit trail with the actual cancelled cart contents (r4: cancelled transactions) */
-        const details = 'Cart cleared by ' + me.full_name + ': ' + cart.value
-          .map(i => i.qty + 'x ' + i.name + ' (' + fmtP(i.price * i.qty) + ')').join(', ')
-          + (discPct.value ? ' — SC discount ' + fmtP(discountPeso.value) : '');
-        const n = cart.value.length;
-        cart.value = [];
-        discPct.value = 0;
-        persistCart();
-        api('api_session.php?action=void_log', { kind: 'clear', items: details });
-        toast('success', 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ').');
-      });
+      /* audit trail with the actual cancelled cart contents (r4: cancelled transactions) */
+      const details = 'Cart cleared by ' + me.full_name + ': ' + cart.value
+        .map(i => i.qty + 'x ' + i.name + ' (' + fmtP(i.price * i.qty) + ')').join(', ')
+        + (discPct.value ? ' — SC discount ' + fmtP(discountPeso.value) : '');
+      const n = cart.value.length;
+      cart.value = [];
+      discPct.value = 0;
+      persistCart();
+      api('api_session.php?action=void_log', { kind: 'clear', items: details });
+      toast('success', 'Cart cleared (' + n + ' item' + (n === 1 ? '' : 's') + ').');
     }
     
     function setQty(i, val) {
