@@ -3,10 +3,11 @@
 require __DIR__ . '/db.php';
 
 /* ── Post-sale void (r4) ─────────────────────────────────────────────
-   Money-level reversal: admin/super_admin only, supervisor password
-   required, reason required, display stock restored in the same
-   transaction, movement + audit + notification written. ─────────── */
-$user = require_role('admin', 'super_admin');
+   Money-level reversal: admin/super_admin may void any sale; a cashier
+   may void their OWN sale only (supervisor password required in both
+   cases, reason required, display stock restored in the same
+   transaction, movement + audit + notification written). ─────────── */
+$user = require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -22,6 +23,17 @@ if (!$saleId) {
 }
 if ($reason === '') {
     json_out(['success' => false, 'message' => 'A reason is required to void a sale.']);
+}
+
+/* ownership rule: cashiers may only void sales they rang up themselves */
+$own = db()->prepare('SELECT cashier_id FROM sales WHERE id = ?');
+$own->execute([$saleId]);
+$s0 = $own->fetch();
+if (!$s0) {
+    json_out(['success' => false, 'message' => 'Receipt not found.']);
+}
+if ($user['role'] === 'cashier' && (int)$s0['cashier_id'] !== (int)$user['id']) {
+    json_out(['success' => false, 'message' => 'Cashiers can only void their own sales.'], 403);
 }
 
 /* supervisor password with lockout (same policy as cart void) */

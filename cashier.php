@@ -187,7 +187,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
             </div>
           </div>
           <div class="cart-row" v-for="(it,i) in cart" :key="it.id">
-            <button class="rm" @click="voidItem(i)" :title="t('Void')" :aria-label="t('Void')">{{ t('Void') }}</button>
+            <button class="rm" @click="qty(i,-1)" title="Bawasan / alisin sa cart" aria-label="Remove item">✕</button>
             <div class="c-name">
               <div class="c-n1">{{ it.name }}</div>
               <div class="c-n2">{{ fmtP(it.price) }} / {{ it.unit }}</div>
@@ -313,7 +313,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
                 <template v-if="s.status !== 'voided'">
                   <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
                   <button class="btn btn-outline btn-sm" @click="reprint(s.id)">🖨 {{ t('Reprint') }}</button>
-                  <button v-if="me.role === 'super_admin'" class="btn btn-outline btn-sm" @click="voidSale(s)">⛔ {{ t('Void') }}</button>
+                  <button class="btn btn-outline btn-sm" @click="voidSale(s)">⛔ {{ t('Void') }}</button>
                 </template>
                 <template v-else>
                   <button class="btn btn-outline btn-sm" @click="viewReceipt(s)">👁 {{ t('View') }}</button>
@@ -553,7 +553,13 @@ createApp({
     function qty(i, d) {
       const it = cart.value[i];
       const next = it.qty + d;
-      if (next <= 0) { cart.value.splice(i, 1); persistCart(); return; }
+      if (next <= 0) {
+        cart.value.splice(i, 1);
+        persistCart();
+        /* audit trail — makikita sa History Logs ng admin */
+        api('api_session.php?action=void_log', { kind: 'item', items: 'Removed ' + it.qty + ' ' + it.unit + ' ' + it.name + ' (' + fmtP(it.price * it.qty) + ') by ' + me.full_name });
+        return;
+      }
       if (next > it.stock) { toast('warning', 'Only ' + it.stock + ' ' + it.unit + ' on display'); return; }
       it.qty = next;
       persistCart();
@@ -577,17 +583,6 @@ createApp({
       if (r.success) return res.value || '';
       toast('error', r.message || 'Wrong password');
       return null;
-    }
-    function voidItem(i) {
-      const it = cart.value[i];
-      askVoidPassword(t('Void item')).then(pw => {
-        if (pw === null) return;
-        cart.value.splice(i, 1);
-        persistCart();
-        /* audit trail — makikita sa History Logs ng admin */
-        api('api_session.php?action=void_log', { kind: 'item', items: 'Voided ' + it.qty + ' ' + it.unit + ' ' + it.name + ' (' + fmtP(it.price * it.qty) + ') by ' + me.full_name });
-        toast('success', 'Voided: ' + it.name);
-      });
     }
     function clearCart() {
       if (!cart.value.length) return;
@@ -888,7 +883,7 @@ createApp({
     return {
       lang, saveLang, t, langOpen, pickLang,
       me, loading, products, cats, cat, search, scanInput, filtered, catIcon, loadProducts, avail,
-      cart, cartCount, subtotal, total, discPct, discountPeso, addToCart, qty, setQty, voidItem, clearCart, scanEnter, cartOpen,
+      cart, cartCount, subtotal, total, discPct, discountPeso, addToCart, qty, setQty, clearCart, scanEnter, cartOpen,
       payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout, voidSale,
       exactCash, quickBills,
       session, clockModal, startingCash, clockIn, clockOut,
