@@ -717,11 +717,12 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
       
       <template v-if="view==='reports'">
         <div class="page-head no-print">
-          <div><h2>{{ rep.kind==='inventory' ? '📦 Inventory Report' : '📈 Sales Reports' }}</h2><div class="sub">{{ rep.kind==='inventory' ? 'Fast & slow moving products — know what to restock and what not to overstock' : 'Daily, weekly, monthly, overall & custom range' }}</div></div>
+          <div><h2>{{ rep.kind==='inventory' ? '📦 Inventory Report' : rep.kind==='voided' ? '🚫 Voided Sales' : '📈 Sales Reports' }}</h2><div class="sub">{{ rep.kind==='inventory' ? 'Fast & slow moving products — know what to restock and what not to overstock' : rep.kind==='voided' ? 'Sales that did not push through — with who voided them and why' : 'Daily, weekly, monthly, overall & custom range' }}</div></div>
           <div style="display:flex;gap:10px;align-items:center">
-            <select v-if="isSuper" v-model="rep.kind" @change="onReportKind" style="padding:10px 12px;border:1.6px solid var(--line);border-radius:10px;font-family:inherit;font-size:13.5px;background:#fff;cursor:pointer">
+            <select v-model="rep.kind" @change="onReportKind" style="padding:10px 12px;border:1.6px solid var(--line);border-radius:10px;font-family:inherit;font-size:13.5px;background:#fff;cursor:pointer">
               <option value="sales">📈 Sales Report</option>
-              <option value="inventory">📦 Inventory Report</option>
+              <option value="inventory" v-if="isSuper">📦 Inventory Report</option>
+              <option value="voided">🚫 Voided Sales</option>
             </select>
             <template v-if="rep.kind==='sales'">
               <button class="btn btn-outline" @click="exportCSV">⬇ Export CSV</button>
@@ -843,6 +844,65 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
         </div>
 
         
+        <div v-if="rep.kind==='voided'">
+        <div class="report-controls no-print">
+          <div class="period-pills">
+            <button :class="{active: rep.period==='daily'}" @click="setPeriod('daily')">Daily</button>
+            <button :class="{active: rep.period==='weekly'}" @click="setPeriod('weekly')">Weekly</button>
+            <button :class="{active: rep.period==='monthly'}" @click="setPeriod('monthly')">Monthly</button>
+            <button :class="{active: rep.period==='overall'}" @click="setPeriod('overall')">Overall</button>
+            <button :class="{active: rep.period==='custom'}" @click="setPeriod('custom')">Custom</button>
+          </div>
+          <div class="date-controls">
+            <template v-if="rep.period==='daily'">
+              <input type="date" v-model="rep.date" @change="loadVoided">
+            </template>
+            <template v-else-if="rep.period==='weekly'">
+              <input type="date" v-model="rep.date" @change="loadVoided">
+              <span class="muted" style="font-size:12.5px">week containing this date (Mon–Sun)</span>
+            </template>
+            <template v-else-if="rep.period==='monthly'">
+              <input type="month" v-model="rep.month" @change="loadVoided">
+            </template>
+            <template v-else-if="rep.period==='custom'">
+              <input type="date" v-model="rep.from" @change="loadVoided">
+              <span style="color:var(--ink-soft)">→</span>
+              <input type="date" v-model="rep.to" @change="loadVoided">
+            </template>
+          </div>
+        </div>
+
+        <div class="card" style="border-left:4px solid #b91c1c">
+          <div class="card-body report-title">{{ rep.voidedLabel || 'Loading…' }}</div>
+        </div>
+
+        <div class="kpi-grid" v-if="rep.voidedSummary">
+          <div class="kpi"><div class="k-cap">Voided Sales</div><div class="k-val" style="color:#b91c1c">{{ rep.voidedSummary.count }}</div></div>
+          <div class="kpi alt1"><div class="k-cap">Total Amount Reversed</div><div class="k-val" style="color:#b91c1c">{{ fmtP(rep.voidedSummary.amount) }}</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="tbl">
+              <thead><tr><th>{{ t('Receipt') }}</th><th>Sold at</th><th>Voided at</th><th>{{ t('Cashier') }}</th><th>Voided by</th><th class="num">{{ t('Total') }}</th><th>Reason</th><th style="text-align:center">Receipt</th></tr></thead>
+              <tbody>
+                <tr v-if="!rep.voidedList.length"><td colspan="8" class="loading-row">No voided sales in this period. ✅</td></tr>
+                <tr v-for="s in rep.voidedList" :key="s.id">
+                  <td class="strong">{{ s.receipt_no }} <span class="badge b-red" style="margin-left:6px">VOID</span></td>
+                  <td class="muted" style="white-space:nowrap">{{ fmtDT(s.created_at) }}</td>
+                  <td class="muted" style="white-space:nowrap">{{ fmtDT(s.voided_at) }}</td>
+                  <td>{{ s.cashier }}</td>
+                  <td>{{ s.voided_by || '—' }}</td>
+                  <td class="num strong" style="color:#b91c1c">{{ fmtP(s.total_amount) }}</td>
+                  <td style="max-width:260px">{{ s.void_reason }}</td>
+                  <td style="text-align:center"><button class="btn btn-outline btn-sm" @click="viewReceiptAdmin(s)">👁 View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+
         <div v-if="rep.kind==='sales'">
         <div class="report-controls no-print">
           <div class="period-pills">
