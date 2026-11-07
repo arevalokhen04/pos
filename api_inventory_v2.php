@@ -96,7 +96,9 @@ if ($method === 'GET') {
             
             $movers = array_filter($rows, fn($r) => (int)$r['sold30'] > 0);
             $avg = $movers ? array_sum(array_column($movers, 'sold30')) / count($movers) : 0;
-            $fastline = max(1, (int)ceil($avg));
+            /* fixed classification rule (user-defined): units sold ABOVE 10 in the
+               selected period = fast; 1-10 = slow; 0 = no sales */
+            $fastline = 10;
 
             $summary = ['fast' => 0, 'slow' => 0, 'dead' => 0, 'deadStockValue' => 0.0];
             foreach ($rows as &$r) {
@@ -105,7 +107,7 @@ if ($method === 'GET') {
                 $r['total_stock']    = (int)$r['stock_qty'] + (int)$r['display_qty'];
                 $r['stock_value'] = round(((float)$r['total_stock']) * ((float)$r['cost_price']), 2);
                 $r['days_since']  = $r['last_sold'] ? (int)floor((time() - strtotime($r['last_sold'])) / 86400) : null;
-                $r['movement']    = $r['sold30'] >= $fastline ? 'fast' : ($r['sold30'] > 0 ? 'slow' : 'dead');
+                $r['movement']    = $r['sold30'] > $fastline ? 'fast' : ($r['sold30'] > 0 ? 'slow' : 'dead');
                 $summary[$r['movement']]++;
                 if ($r['movement'] === 'dead') $summary['deadStockValue'] += $r['stock_value'];
             }
