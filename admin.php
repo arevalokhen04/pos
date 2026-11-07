@@ -2455,9 +2455,28 @@ const __app = createApp({
     }
 
     function openBarcode(p) {
-      /* single-product barcode label sheet (barcode_labels.php?product_id=) —
-         opens one CODE128 label for this product, with its own Print button */
-      window.open('barcode_labels.php?product_id=' + p.id, '_blank');
+      /* single-product barcode labels — ask how many copies, then open the sheet */
+      Swal.fire({
+        title: '🏷 ' + t('Barcode') + ' — ' + p.name,
+        html: '<div style="font-size:12.5px;color:#52636f">How many copies do you want to print?</div>',
+        input: 'number',
+        inputValue: 1,
+        inputAttributes: { min: 1, max: 100, step: 1 },
+        inputValidator: v => {
+          const n = parseInt(v, 10);
+          if (!n || n < 1) return 'Enter at least 1';
+          if (n > 100) return 'Maximum of 100 per print';
+          return null;
+        },
+        showCancelButton: true,
+        confirmButtonText: '🖨 Print labels',
+        confirmButtonColor: '#16a34a',
+        reverseButtons: true,
+      }).then(res => {
+        if (!res.isConfirmed) return;
+        const n = Math.max(1, Math.min(100, parseInt(res.value, 10) || 1));
+        window.open('barcode_labels.php?product_id=' + p.id + '&copies=' + n, '_blank');
+      });
     }
 
     async function loadReport() {

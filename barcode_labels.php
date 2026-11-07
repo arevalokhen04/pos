@@ -5,6 +5,8 @@ require __DIR__ . '/db.php';
 $user = require_role('admin', 'super_admin');
 
 $pid = (int)($_GET['product_id'] ?? 0);
+/* how many copies per label (1-100) — set by the Barcode dialog in admin.php */
+$copies = max(1, min(100, (int)($_GET['copies'] ?? 1)));
 
 if ($pid > 0) {
     $st = db()->prepare('SELECT p.name, p.unit, p.selling_price, p.barcode, p.id FROM products p WHERE p.id = ?');
@@ -85,7 +87,7 @@ if (!$products) {
 <body>
 
 <div class="toolbar">
-  <h3>🏷 Barcode labels — <?= count($products) ?> product<?= count($products) === 1 ? '' : 's' ?>, 1 label each</h3>
+  <h3>🏷 Barcode labels — <?= count($products) ?> product<?= count($products) === 1 ? '' : 's' ?> × <?= $copies ?> label<?= $copies === 1 ? '' : 's' ?> = <?= count($products) * $copies ?> total</h3>
   <span class="info">Scannable CODE128 · 50 × 30 mm</span>
   <button class="print" onclick="printSheet()">🖨 Print</button>
   <button class="close" onclick="window.close()">✕ Close</button>
@@ -94,6 +96,7 @@ if (!$products) {
 
 <div class="sheet" id="sheet">
   <?php foreach ($products as $p): ?>
+  <?php for ($copy = 0; $copy < $copies; $copy++): ?>
   <?php
       $code  = $p['barcode'] !== '' ? $p['barcode'] : ('MH-P' . str_pad((string)$p['id'], 6, '0', STR_PAD_LEFT));
       $price = '₱' . number_format((float)$p['selling_price'], 2);
@@ -107,6 +110,7 @@ if (!$products) {
     <div class="l-bar"><svg class="bc" data-code="<?= $codeH ?>"></svg></div>
     <div class="l-code"><?= $codeH ?></div>
   </div>
+  <?php endfor; ?>
   <?php endforeach; ?>
 </div>
 
