@@ -1273,6 +1273,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
               <iframe :src="rcptDetail.url" style="width:100%;height:520px;border:1.5px dashed var(--green-200);border-radius:12px;background:#fff" title="Receipt preview"></iframe>
             </div>
             <div class="modal-foot">
+              <button class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt">⛔ Void items</button>
               <button class="btn btn-outline" @click="rcptDetail.open=false">Close</button>
             </div>
           </div>
@@ -2583,6 +2584,58 @@ const __app = createApp({
       rcptDetail.url = 'api_print.php?sale_id=' + s.id + '&preview=1';
       rcptDetail.open = true;
     }
+
+    /* partial void from the receipt preview — tick the items that did not
+       push through; stock returns and the receipt total updates (r4) */
+    async function voidItemsFromReceipt() {
+      if (!rcptDetail.saleId) return;
+      const r = await api('api_void_sale.php?action=items&sale_id=' + rcptDetail.saleId);
+      if (!r.success) return toast('error', r.message);
+      const boxes = r.items.map(it =>
+        '<label style="display:flex;gap:10px;align-items:center;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;font-size:13.5px;cursor:pointer">' +
+        '<input type="checkbox" class="vi-check" value="' + it.id + '">' +
+        '<span style="flex:1">' + it.product_name + '</span>' +
+        '<span style="color:#6b7280">x' + it.qty + '</span>' +
+        '<span style="font-weight:700">₱' + Number(it.subtotal).toFixed(2) + '</span></label>').join('');
+      const res = await Swal.fire({
+        title: '⛔ Void items — ' + (r.receipt_no || ''),
+        html: '<div style="text-align:left;max-height:260px;overflow-y:auto">' + boxes + '</div>' +
+              '<div style="font-size:11.5px;color:#7a8a80;margin-top:8px">Tick the items that did not push through — stock returns to display and the receipt total updates.</div>',
+        input: 'text',
+        inputPlaceholder: 'Reason (required)',
+        showCancelButton: true,
+        confirmButtonText: 'Next',
+        confirmButtonColor: '#dc2626',
+        reverseButtons: true,
+        preConfirm: () => {
+          const ids = [...document.querySelectorAll('.vi-check:checked')].map(c => Number(c.value));
+          if (!ids.length) { Swal.showValidationMessage('Select at least one item'); return false; }
+          const reason = (Swal.getPopup().querySelector('input') || {}).value || '';
+          if (!reason.trim()) { Swal.showValidationMessage('A reason is required'); return false; }
+          return { ids, reason: reason.trim() };
+        },
+      });
+      if (!res.isConfirmed || !res.value) return;
+      const pw = await Swal.fire({
+        title: '🔑 Authorize void',
+        input: 'password',
+        inputPlaceholder: 'Void password',
+        showCancelButton: true,
+        confirmButtonText: 'Confirm',
+        confirmButtonColor: '#16a34a',
+        reverseButtons: true,
+      });
+      if (!pw.isConfirmed) return;
+      const r2 = await api('api_void_sale.php', { mode: 'items', sale_id: rcptDetail.saleId, items: res.value.ids, reason: res.value.reason, password: pw.value || '' });
+      if (r2.success) {
+        toast('success', r2.message);
+        rcptDetail.url = 'api_print.php?sale_id=' + rcptDetail.saleId + '&preview=1&t=' + Date.now();
+        if (view === 'reports') { if (rep.kind === 'voided') loadVoided(); else loadReport(); }
+        if (view === 'dashboard') loadDashboard();
+      } else {
+        toast('error', r2.message);
+      }
+    }
     function printReport() { window.print(); }
 
     
@@ -2857,7 +2910,7 @@ const __app = createApp({
       req, loadRequests, openRequest, submitRequest, reqTypeLabel, editDiffSummary, catIcon,
       appr, loadApprovals, decide, reqDetail, viewRequest,
       rep, setPeriod, onReportKind, loadReport, loadVoided, openBarcode, exportCSV, printReport,
-      rcptDetail, viewReceiptAdmin,
+      rcptDetail, viewReceiptAdmin, voidItemsFromReceipt,
       lang, saveLang, t, langOpen, pickLang, audit, loadAudit, backup, bk, loadBackups, createBackup, downloadBackup, restoreBackup, deleteBackup, fmtSize, runAutoNow, onRestoreFilePick, restoreUpload, backupActionLabel, loadOverview, loadAutoSettings, saveAutoSettings, verifyBackup, factoryReset,
       users, loadUsers, openUser, saveUser, toggleUserStatus, openResetPass, doResetPass,
       logout,

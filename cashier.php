@@ -344,6 +344,7 @@ $me = ['id' => (int)$user['id'], 'username' => $user['username'], 'full_name' =>
         <iframe v-show="!preview.loading" :src="preview.url" class="receipt-frame" @load="preview.loading=false" title="Receipt preview"></iframe>
       </div>
       <div class="modal-foot">
+        <button class="btn btn-outline" style="margin-right:auto;color:#b91c1c;border-color:#fecaca" @click="voidItemsFromReceipt()">⛔ {{ t('Void items') }}</button>
         <button class="btn btn-outline" @click="preview.open=false">{{ t('Close') }}</button>
         <button class="btn btn-primary" @click="reprint(preview.saleId)">🖨 {{ t('Print') }}</button>
       </div>
@@ -392,6 +393,8 @@ createApp({
       'Receipt sent to the printer.': 'Naipadala ang resibo sa printer.',
       'Printing failed — check that the printer is on and has paper.': 'Hindi na-print — tingnan kung naka-on at may papel ang printer.',
       'Authorize void': 'Awtorisasyon ng void', 'Void sale': 'I-void ang benta', 'Reason (required)': 'Dahilan (kailangan)',
+      'Void items': 'I-void ang mga item', 'Select at least one item': 'Pumili ng kahit isang item',
+      'Tick the items that did not push through — stock returns to display and the receipt total updates.': 'Tikluan ang mga item na hindi natuloy — babalik ang stock sa display at mag-a-update ang total ng resibo.',
       'Exact': 'Eksakto', 'Round ↑': 'Round ↑', 'Change': 'Sukli', 'Back': 'Bumalik',
       'Processing…': 'Pinoproseso…', '✔ Complete sale': '✔ Tapusin ang benta',
       'Sale completed!': 'Tapos na ang benta!', 'Receipt': 'Resibo', 'Paid': 'Bayad',
@@ -730,6 +733,49 @@ createApp({
       hist.open = true;
       loadHistory();
     }
+    /* partial void from the receipt preview — tick the items that did not
+       push through; stock returns and the receipt total updates (r4) */
+    async function voidItemsFromReceipt() {
+      const r = await api('api_void_sale.php?action=items&sale_id=' + preview.saleId);
+      if (!r.success) return toast('error', r.message);
+      const boxes = r.items.map(it =>
+        '<label style="display:flex;gap:10px;align-items:center;padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;font-size:13.5px;cursor:pointer">' +
+        '<input type="checkbox" class="vi-check" value="' + it.id + '">' +
+        '<span style="flex:1">' + it.product_name + '</span>' +
+        '<span style="color:#6b7280">x' + it.qty + '</span>' +
+        '<span style="font-weight:700">₱' + Number(it.subtotal).toFixed(2) + '</span></label>').join('');
+      const res = await Swal.fire({
+        title: '⛔ ' + t('Void items') + ' — ' + (r.receipt_no || ''),
+        html: '<div style="text-align:left;max-height:260px;overflow-y:auto">' + boxes + '</div>' +
+              '<div style="font-size:11.5px;color:#7a8a80;margin-top:8px">' + t('Tick the items that did not push through — stock returns to display and the receipt total updates.') + '</div>',
+        input: 'text',
+        inputPlaceholder: t('Reason (required)'),
+        showCancelButton: true,
+        confirmButtonText: 'Next',
+        confirmButtonColor: '#dc2626',
+        reverseButtons: true,
+        preConfirm: () => {
+          const ids = [...document.querySelectorAll('.vi-check:checked')].map(c => Number(c.value));
+          if (!ids.length) { Swal.showValidationMessage(t('Select at least one item')); return false; }
+          const reason = (Swal.getPopup().querySelector('input') || {}).value || '';
+          if (!reason.trim()) { Swal.showValidationMessage(t('Reason (required)')); return false; }
+          return { ids, reason: reason.trim() };
+        },
+      });
+      if (!res.isConfirmed || !res.value) return;
+      const pw = await askVoidPassword(t('Authorize void'));
+      if (pw === null) return;
+      const r2 = await api('api_void_sale.php', { mode: 'items', sale_id: preview.saleId, items: res.value.ids, reason: res.value.reason, password: pw });
+      if (r2.success) {
+        toast('success', r2.message);
+        preview.loading = true;
+        preview.url = 'api_print.php?sale_id=' + preview.saleId + '&preview=1&t=' + Date.now();
+        loadHistory();
+        loadProducts();
+      } else {
+        toast('error', r2.message);
+      }
+    }
     function reprint(saleId) { printRaw(saleId); }
     function viewReceipt(s) {
       preview.saleId = s.id;
@@ -880,7 +926,7 @@ createApp({
     return {
       lang, saveLang, t, langOpen, pickLang,
       me, loading, products, cats, cat, search, scanInput, filtered, catIcon, loadProducts, avail,
-      cart, cartCount, subtotal, total, discPct, discountPeso, addToCart, qty, setQty, clearCart, scanEnter, cartOpen,
+      cart, cartCount, subtotal, total, discPct, discountPeso, addToCart, qty, setQty, clearCart, scanEnter, cartOpen, voidItemsFromReceipt,
       payModal, payMethod, tendered, tenderInput, paying, openCheckout, change, checkout, voidSale,
       exactCash, quickBills,
       session, clockModal, startingCash, clockIn, clockOut,
