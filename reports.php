@@ -92,6 +92,34 @@ if ($action === 'export') {
     exit;
 }
 
+/* Voided sales report (r4): a dedicated list for admin/super admin —
+   every sale that was reversed, with who voided it and why. */
+if ($action === 'voided') {
+    $st = db()->prepare(
+        'SELECT s.id, s.receipt_no, s.created_at, s.total_amount, s.voided_at, s.void_reason,
+                u1.full_name AS cashier, u2.full_name AS voided_by
+           FROM sales s
+           JOIN users u1 ON u1.id = s.cashier_id
+           LEFT JOIN users u2 ON u2.id = s.voided_by
+          WHERE s.status = "voided" AND s.created_at BETWEEN ? AND ?
+          ORDER BY COALESCE(s.voided_at, s.created_at) DESC'
+    );
+    $st->execute([$from, $to]);
+    $rows = $st->fetchAll();
+    $sum = 0.0;
+    foreach ($rows as &$r) {
+        $r['total_amount'] = (float)$r['total_amount'];
+        $sum += $r['total_amount'];
+    }
+    unset($r);
+    json_out([
+        'success' => true,
+        'label'   => $label,
+        'summary' => ['count' => count($rows), 'amount' => round($sum, 2)],
+        'voided'  => $rows,
+    ]);
+}
+
 $pdo = db();
 $q = static function (string $sql, array $p = []) use ($pdo, $from, $to): array {
     $st = $pdo->prepare(str_replace(['{F}', '{T}'], ['?', '?'], $sql));
