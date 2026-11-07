@@ -740,10 +740,10 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
           </div>
 
           <div class="kpi-grid">
-            <div class="kpi"><div class="k-cap">🔥 Fast moving</div><div class="k-val">{{ movement.summary ? movement.summary.fast : '—' }}</div></div>
-            <div class="kpi alt2"><div class="k-cap">🐢 Slow moving</div><div class="k-val">{{ movement.summary ? movement.summary.slow : '—' }}</div></div>
-            <div class="kpi alt3"><div class="k-cap">😴 No sales ({{ movement.days }} days)</div><div class="k-val">{{ movement.summary ? movement.summary.dead : '—' }}</div></div>
-            <div class="kpi alt1"><div class="k-cap">💰 Stock value sitting (no sales)</div><div class="k-val">{{ fmtP(movement.summary ? movement.summary.deadStockValue : 0) }}</div></div>
+            <div class="kpi" :class="{ 'no-print': movementTab==='slow' }"><div class="k-cap">🔥 Fast moving</div><div class="k-val">{{ movement.summary ? movement.summary.fast : '—' }}</div></div>
+            <div class="kpi alt2" :class="{ 'no-print': movementTab==='fast' }"><div class="k-cap">🐢 Slow moving</div><div class="k-val">{{ movement.summary ? movement.summary.slow : '—' }}</div></div>
+            <div class="kpi alt3" :class="{ 'no-print': movementTab!=='graph' }"><div class="k-cap">😴 No sales ({{ movement.days }} days)</div><div class="k-val">{{ movement.summary ? movement.summary.dead : '—' }}</div></div>
+            <div class="kpi alt1" :class="{ 'no-print': movementTab!=='graph' }"><div class="k-cap">💰 Stock value sitting (no sales)</div><div class="k-val">{{ fmtP(movement.summary ? movement.summary.deadStockValue : 0) }}</div></div>
           </div>
 
           <div class="period-pills" style="margin-bottom:16px">
