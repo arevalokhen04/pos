@@ -581,6 +581,7 @@ $pageTitle = $IS_SUPER ? 'Super Admin' : 'Admin';
                       <button class="btn btn-outline btn-sm" @click="openTransfer(p)">⇄ Transfer</button>
                       <button class="btn btn-outline btn-sm" @click="openAdjust(p)">⇅ Adjust</button>
                       <button class="btn btn-outline btn-sm" @click="openProduct(p)">✏️ Edit</button>
+                      <button class="btn btn-outline btn-sm" @click="openBarcode(p)">🏷 Barcode</button>
                     </div>
                   </td>
                 </tr>
@@ -2453,6 +2454,12 @@ const __app = createApp({
       return p.toString();
     }
 
+    function openBarcode(p) {
+      /* single-product barcode label sheet (barcode_labels.php?product_id=) —
+         opens one CODE128 label for this product, with its own Print button */
+      window.open('barcode_labels.php?product_id=' + p.id, '_blank');
+    }
+
     async function loadReport() {
       const r = await api('reports.php?' + reportQS());
       if (!r.success) { toast('error', r.message); return; }
@@ -2770,7 +2777,7 @@ const __app = createApp({
       openCategories, saveCategory, deleteCategory,
       req, loadRequests, openRequest, submitRequest, reqTypeLabel, editDiffSummary, catIcon,
       appr, loadApprovals, decide, reqDetail, viewRequest,
-      rep, setPeriod, onReportKind, loadReport, loadVoided, exportCSV, printReport,
+      rep, setPeriod, onReportKind, loadReport, loadVoided, openBarcode, exportCSV, printReport,
       rcptDetail, viewReceiptAdmin,
       lang, saveLang, t, langOpen, pickLang, audit, loadAudit, backup, bk, loadBackups, createBackup, downloadBackup, restoreBackup, deleteBackup, fmtSize, runAutoNow, onRestoreFilePick, restoreUpload, backupActionLabel, loadOverview, loadAutoSettings, saveAutoSettings, verifyBackup, factoryReset,
       users, loadUsers, openUser, saveUser, toggleUserStatus, openResetPass, doResetPass,
